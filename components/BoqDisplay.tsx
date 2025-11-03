@@ -10,7 +10,6 @@ import AutoResizeTextarea from './AutoResizeTextarea';
 import RoomVisualizationModal from './RoomVisualizationModal';
 import ValidationFeedback from './ValidationFeedback';
 
-import DownloadIcon from './icons/DownloadIcon';
 import WandIcon from './icons/WandIcon';
 import ImageIcon from './icons/ImageIcon';
 import SearchIcon from './icons/SearchIcon';
@@ -25,7 +24,6 @@ interface BoqDisplayProps {
   boq: Boq | null;
   onRefine: (refinementPrompt: string) => void;
   isRefining: boolean;
-  onExport: () => void;
   margin: number;
   onMarginChange: (margin: number) => void;
   onBoqItemUpdate: (itemIndex: number, updatedValues: Partial<BoqItem>) => void;
@@ -41,7 +39,7 @@ interface BoqDisplayProps {
 }
 
 const BoqDisplay: React.FC<BoqDisplayProps> = ({ 
-    boq, onRefine, isRefining, onExport, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
+    boq, onRefine, isRefining, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
     onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl,
     isValidating, validationResult
 }) => {
@@ -168,7 +166,7 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700" id="boq-display-section">
         <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 no-print">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Generated Bill of Quantities</h2>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <div className="flex items-center gap-2">
                 <label htmlFor="margin-input" className="text-sm font-medium text-slate-600 dark:text-slate-300">Project Margin:</label>
                 <div className="relative rounded-md shadow-sm">
@@ -216,15 +214,6 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
                 className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
             >
                 <PrintIcon /> Print
-            </button>
-            <button
-                onClick={onExport}
-                disabled={!boq || boq.length === 0}
-                title="Export to XLSX (Ctrl+E)"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-green-500 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:text-slate-100 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
-            >
-                <DownloadIcon />
-                Export
             </button>
           </div>
         </div>

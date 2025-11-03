@@ -104,3 +104,17 @@ export interface Toast {
 }
 
 export type Theme = 'light' | 'dark';
+
+export interface CompanyInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
+export interface BrandingSettings {
+  logoUrl: string; // base64 data URL
+  primaryColor: string; // hex code
+  companyInfo: CompanyInfo;
+}

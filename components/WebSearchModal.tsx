@@ -4,6 +4,7 @@ import { fetchProductDetails } from '../services/geminiService';
 import LoaderIcon from './icons/LoaderIcon';
 import PlusIcon from './icons/PlusIcon';
 import SearchIcon from './icons/SearchIcon';
+import LinkIcon from './icons/LinkIcon';
 
 interface WebSearchModalProps {
   isOpen: boolean;
@@ -103,19 +104,22 @@ const WebSearchModal: React.FC<WebSearchModalProps> = ({ isOpen, onClose, initia
               )}
               <p className="text-slate-700 dark:text-slate-300 mb-4">{productDetails.description}</p>
               {productDetails.sources && productDetails.sources.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-300 mb-2">Sources</h3>
-                  <ul className="list-disc list-inside space-y-1">
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <h3 className="text-md font-semibold text-slate-600 dark:text-slate-300 mb-3">Sources from Web Search:</h3>
+                  <div className="space-y-2">
                     {productDetails.sources.map((source, index) => (
-                      <li key={index} className="text-sm text-slate-500 dark:text-slate-400">
+                      <div key={index}>
                         {source.web && (
-                          <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 dark:hover:text-blue-400 hover:underline">
-                            {source.web.title || 'Web Source'}
+                          <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="flex items-start p-2 rounded-md bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <LinkIcon />
+                            <span className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
+                              {source.web.title || source.web.uri}
+                            </span>
                           </a>
                         )}
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>

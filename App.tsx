@@ -9,9 +9,11 @@ import TabButton from './components/TabButton';
 import ConfirmModal from './components/ConfirmModal';
 import AddRoomModal from './components/AddRoomModal';
 import CompareModal from './components/CompareModal';
-import Toast from './components/Toast'; // New Import
+import Toast from './components/Toast';
+import BrandingModal from './components/BrandingModal';
+import PrintHeader from './components/PrintHeader';
 
-import { Boq, BoqItem, ClientDetails as ClientDetailsType, Room, Toast as ToastType, Theme } from './types';
+import { BoqItem, ClientDetails as ClientDetailsType, Room, Toast as ToastType, Theme, BrandingSettings } from './types';
 import { generateBoq, refineBoq, generateRoomVisualization, validateBoq } from './services/geminiService';
 import { exportToXlsx } from './utils/exportToXlsx';
 import SparklesIcon from './components/icons/SparklesIcon';
@@ -20,10 +22,24 @@ import LoaderIcon from './components/icons/LoaderIcon';
 import SaveIcon from './components/icons/SaveIcon';
 import LoadIcon from './components/icons/LoadIcon';
 import CompareIcon from './components/icons/CompareIcon';
+import DownloadIcon from './components/icons/DownloadIcon';
 
 type ActiveTab = 'details' | 'rooms';
 
+const defaultBranding: BrandingSettings = {
+  logoUrl: '',
+  primaryColor: '#92D050', // Default green
+  companyInfo: {
+    name: 'Your Company Name',
+    address: '123 Main Street, Suite 100, Anytown, USA 12345',
+    phone: '555-123-4567',
+    email: 'contact@yourcompany.com',
+    website: 'www.yourcompany.com',
+  },
+};
+
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [clientDetails, setClientDetails] = useState<ClientDetailsType>({
     clientName: '',
     projectName: '',
@@ -40,13 +56,16 @@ const App: React.FC = () => {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('details');
   const [isRefining, setIsRefining] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [margin, setMargin] = useState<number>(0);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
   const [toast, setToast] = useState<ToastType | null>(null);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark');
+  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(defaultBranding);
 
   const activeRoom = rooms.find(room => room.id === activeRoomId);
 
@@ -82,7 +101,7 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [rooms, clientDetails, margin]); // Add dependencies to ensure shortcuts have latest data
+  }, [rooms, clientDetails, margin, brandingSettings]); 
 
   // --- Toast Timeout ---
   useEffect(() => {
@@ -119,7 +138,6 @@ const App: React.FC = () => {
     const roomToDuplicate = rooms.find(room => room.id === id);
     if (!roomToDuplicate) return;
 
-    // Deep copy to avoid reference issues with answers and boq
     const newRoom: Room = JSON.parse(JSON.stringify(roomToDuplicate));
 
     newRoom.id = Math.random().toString(36).substring(2, 9);
@@ -127,7 +145,6 @@ const App: React.FC = () => {
     newRoom.isValidating = false;
     newRoom.validationResult = null; // Reset validation on copy
     
-    // Find the index of the original room to insert the new one after it
     const originalRoomIndex = rooms.findIndex(room => room.id === id);
 
     const updatedRooms = [
@@ -200,12 +217,10 @@ const App: React.FC = () => {
       }
       const newBoq = await generateBoq(requirements);
       
-      // Generation complete, now start validation
       setRooms(prevRooms => prevRooms.map(r => r.id === activeRoomId ? { ...r, boq: newBoq, isLoading: false, isValidating: true } : r));
 
       const validation = await validateBoq(newBoq, requirements);
 
-      // Validation complete, set final state
       setRooms(prevRooms => prevRooms.map(r => r.id === activeRoomId ? { ...r, isValidating: false, validationResult: validation } : r));
 
     } catch (error) {
@@ -220,7 +235,7 @@ const App: React.FC = () => {
 
     const currentBoq = activeRoom.boq || [];
     setIsRefining(true);
-    setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, validationResult: null } : r)); // Clear old validation
+    setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, validationResult: null } : r));
     try {
         const refinedBoq = await refineBoq(currentBoq, refinementPrompt);
         setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, boq: refinedBoq, error: null } : r));
@@ -310,14 +325,18 @@ const App: React.FC = () => {
     );
   };
   
-  const handleExport = () => {
+  const handleExport = async () => {
     if (rooms.some(r => r.boq !== null)) {
+      setIsExporting(true);
+      setToast({ message: 'Generating Excel file...', type: 'success' });
       try {
-        exportToXlsx(rooms, clientDetails, margin);
+        await exportToXlsx(rooms, clientDetails, margin, brandingSettings);
         setToast({ message: 'BOQ exported successfully!', type: 'success' });
       } catch (error) {
         console.error("Export failed:", error);
         setToast({ message: 'Failed to export BOQ.', type: 'error' });
+      } finally {
+        setIsExporting(false);
       }
     } else {
       setToast({ message: 'Please generate at least one BOQ before exporting.', type: 'error' });
@@ -330,6 +349,7 @@ const App: React.FC = () => {
         clientDetails,
         rooms,
         margin,
+        brandingSettings,
       };
       localStorage.setItem('genboq_project', JSON.stringify(projectState));
       setToast({ message: 'Project saved successfully!', type: 'success' });
@@ -349,6 +369,7 @@ const App: React.FC = () => {
             setClientDetails(savedState.clientDetails);
             setRooms(savedState.rooms);
             setMargin(savedState.margin || 0);
+            setBrandingSettings(savedState.brandingSettings || defaultBranding);
             setActiveRoomId(savedState.rooms.length > 0 ? savedState.rooms[0].id : null);
             setActiveTab('details');
             setToast({ message: 'Project loaded successfully!', type: 'success' });
@@ -365,154 +386,4 @@ const App: React.FC = () => {
     }
   };
 
-
-  return (
-    <AuthGate>
-      <div className="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-300">
-        <Header theme={theme} onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center border-b border-slate-200 dark:border-slate-700 mb-6 gap-4">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                    <TabButton isActive={activeTab === 'details'} onClick={() => setActiveTab('details')}>
-                        Project Details
-                    </TabButton>
-                    <TabButton isActive={activeTab === 'rooms'} onClick={() => setActiveTab('rooms')}>
-                        Rooms & BOQs
-                    </TabButton>
-                </nav>
-                <div className="flex items-center gap-4 py-2 sm:py-0">
-                    <button
-                        onClick={handleSaveProject}
-                        title="Save Project (Ctrl+S)"
-                        className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 dark:focus:ring-offset-slate-800 focus:ring-blue-500"
-                    >
-                       <SaveIcon /> Save Project
-                    </button>
-                    <button
-                        onClick={handleLoadProject}
-                        title="Load Project"
-                        className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 dark:focus:ring-offset-slate-800 focus:ring-blue-500"
-                    >
-                        <LoadIcon /> Load Project
-                    </button>
-                </div>
-            </div>
-
-            {activeTab === 'details' && (
-                <ClientDetails details={clientDetails} onDetailsChange={setClientDetails} />
-            )}
-
-            {activeTab === 'rooms' && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="md:col-span-1 space-y-4">
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Rooms</h2>
-                        {rooms.map(room => (
-                            <RoomCard 
-                                key={room.id}
-                                room={room}
-                                isActive={room.id === activeRoomId}
-                                onSelect={setActiveRoomId}
-                                onDuplicate={handleDuplicateRoom}
-                                onDelete={handleDeleteRequest}
-                                onUpdateName={updateRoomName}
-                            />
-                        ))}
-                         <div className="flex gap-2 pt-2">
-                            <button onClick={() => setIsAddRoomModalOpen(true)} className="flex-1 text-center py-2 px-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500 transition-colors">
-                                + Add Room
-                            </button>
-                            <button
-                                onClick={() => setIsCompareModalOpen(true)}
-                                disabled={rooms.filter(r => r.boq).length < 2}
-                                className="flex-1 inline-flex items-center justify-center py-2 px-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={rooms.filter(r => r.boq).length < 2 ? 'Generate at least two BOQs to compare' : 'Compare rooms'}
-                            >
-                                <CompareIcon /> Compare
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="md:col-span-3">
-                        {activeRoom ? (
-                            <div className="space-y-6">
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
-                                        Room Configuration: <span className="text-blue-600 dark:text-blue-400">{activeRoom.name}</span>
-                                    </h2>
-                                    <Questionnaire 
-                                        onAnswersChange={handleAnswersChange} 
-                                        key={activeRoom.id}
-                                        initialAnswers={activeRoom.answers}
-                                    />
-                                     <div className="mt-6 flex justify-end">
-                                        <button
-                                          onClick={handleGenerateBoq}
-                                          disabled={activeRoom.isLoading || Object.keys(activeRoom.answers).length === 0}
-                                          className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 dark:focus:ring-offset-slate-800 focus:ring-blue-500 disabled:bg-slate-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed"
-                                        >
-                                          {activeRoom.isLoading ? <><LoaderIcon/>Generating...</> : <><SparklesIcon/>{activeRoom.boq ? 'Re-generate BOQ' : 'Generate BOQ'}</>}
-                                        </button>
-                                    </div>
-                                </div>
-                                <BoqDisplay 
-                                    boq={activeRoom.boq} 
-                                    onRefine={handleRefineBoq} 
-                                    isRefining={isRefining}
-                                    onExport={handleExport}
-                                    margin={margin}
-                                    onMarginChange={setMargin}
-                                    onBoqItemUpdate={handleBoqItemUpdate}
-                                    onBoqItemAdd={handleBoqItemAdd}
-                                    onBoqItemDelete={handleBoqItemDelete}
-                                    onGenerateVisualization={handleGenerateVisualization}
-                                    onClearVisualization={handleClearVisualization}
-                                    isVisualizing={activeRoom.isVisualizing}
-                                    visualizationError={activeRoom.visualizationError}
-                                    visualizationImageUrl={activeRoom.visualizationImageUrl}
-                                    isValidating={activeRoom.isValidating}
-                                    validationResult={activeRoom.validationResult}
-                                />
-                            </div>
-                        ) : (
-                            <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                                <h3 className="text-xl font-semibold">Select a room or add a new one</h3>
-                                <p className="text-slate-500 dark:text-slate-400 mt-2">Get started by adding a room to your project.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-        </main>
-        <AddRoomModal
-            isOpen={isAddRoomModalOpen}
-            onClose={() => setIsAddRoomModalOpen(false)}
-            onAddRoom={handleAddRoom}
-        />
-        <CompareModal
-            isOpen={isCompareModalOpen}
-            onClose={() => setIsCompareModalOpen(false)}
-            rooms={rooms}
-        />
-        <ConfirmModal
-            isOpen={isConfirmModalOpen}
-            onClose={() => {
-                setIsConfirmModalOpen(false);
-                setRoomToDelete(null);
-            }}
-            onConfirm={handleConfirmDelete}
-            title="Confirm Room Deletion"
-            message={
-                <>
-                    Are you sure you want to delete the room <strong className="font-semibold text-slate-900 dark:text-white">{roomToDelete?.name}</strong>?
-                    <br />
-                    This action cannot be undone.
-                </>
-            }
-        />
-        <Toast toast={toast} onClose={() => setToast(null)} />
-        </div>
-    </AuthGate>
-  );
-};
-
-export default App;
+  const canExport = rooms.some(r => r.boq && r.boq.
