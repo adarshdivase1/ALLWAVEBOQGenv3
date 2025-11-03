@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { Boq, ProductDetails, GroundingSource } from "../types";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { Boq, ProductDetails, GroundingSource, BoqItem } from "../types";
 
 // Initialize the Google Gemini AI client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
@@ -201,4 +201,131 @@ export async function fetchProductDetails(productName: string): Promise<ProductD
     ...productInfo,
     sources: sources,
   };
+}
+
+// Helper function to categorize BOQ items for the visualization prompt
+const generateEquipmentManifest = (boq: Boq): string => {
+  const categories: { [key: string]: BoqItem[] } = {
+    Displays: [],
+    Cameras: [],
+    Microphones: [],
+    Speakers: [],
+    Controls: [],
+    RacksAndInfrastructure: [],
+    Other: [],
+  };
+
+  boq.forEach(item => {
+    const desc = `${item.category.toLowerCase()} ${item.itemDescription.toLowerCase()}`;
+    if (desc.includes('display') || desc.includes('screen') || desc.includes('projector') || desc.includes('video wall')) categories.Displays.push(item);
+    else if (desc.includes('camera')) categories.Cameras.push(item);
+    else if (desc.includes('mic') || desc.includes('microphone')) categories.Microphones.push(item);
+    else if (desc.includes('speaker')) categories.Speakers.push(item);
+    else if (desc.includes('control') || desc.includes('touch panel') || desc.includes('keypad')) categories.Controls.push(item);
+    else if (desc.includes('rack') || desc.includes('pdu') || desc.includes('ups') || desc.includes('credenza')) categories.RacksAndInfrastructure.push(item);
+    else categories.Other.push(item);
+  });
+
+  let manifest = "**Equipment Manifest & Placement Rules:**\n\n";
+
+  const buildSection = (title: string, items: BoqItem[], rule: string) => {
+    if (items.length > 0) {
+      manifest += `**${title}:**\n`;
+      items.forEach(item => {
+        manifest += `- ${item.quantity}x ${item.brand} ${item.model} (${item.itemDescription})\n`;
+      });
+      manifest += `  - **Placement Rule:** ${rule}\n\n`;
+    }
+  };
+
+  buildSection(
+    "Displays", 
+    categories.Displays, 
+    "Mount these on the main 'front' wall of the room. If there are two, they must be mounted side-by-side."
+  );
+  buildSection(
+    "Video Conferencing Cameras", 
+    categories.Cameras, 
+    "Mount the camera(s) logically, typically centered below or between the main display(s)."
+  );
+  buildSection(
+    "Microphones (Audio Input)", 
+    categories.Microphones, 
+    "If ceiling microphones, show them as discreet square or round units flush-mounted in the ceiling, distributed over the main seating/table area for full coverage. If tabletop, show them on the conference table."
+  );
+  buildSection(
+    "Speakers (Audio Output)", 
+    categories.Speakers, 
+    "Show these as discreet round grilles flush-mounted in the ceiling, distributed evenly throughout the entire room to provide balanced audio coverage. The exact quantity specified MUST be shown."
+  );
+  buildSection(
+    "Control Interfaces", 
+    categories.Controls, 
+    "If a tabletop touch panel, place it on the conference table. If a wall-mounted panel, place it near the room's main entrance."
+  );
+  buildSection(
+    "Infrastructure", 
+    categories.RacksAndInfrastructure, 
+    "Show a tall, enclosed equipment rack (like a Middle Atlantic BGR series) placed discreetly in a corner or an adjacent alcove. If no rack is listed, show a low-profile credenza under the main displays that logically houses the system's core electronics."
+  );
+
+  return manifest;
+};
+
+
+/**
+ * Generates a photorealistic visualization of a room based on its specifications and a Bill of Quantities.
+ * @param roomDetails - An object containing details about the room from the questionnaire.
+ * @param boq - The Bill of Quantities for the equipment to be included in the room.
+ * @returns A promise that resolves to a base64-encoded image data URL.
+ */
+export async function generateRoomVisualization(
+  roomDetails: { [key: string]: any },
+  boq: Boq
+): Promise<string> {
+  const model = "imagen-4.0-generate-001";
+
+  const roomType = roomDetails.roomType ? `a modern, high-end corporate ${roomDetails.roomType.replace(/_/g, ' ')}` : 'a modern, high-end corporate meeting room';
+  const roomDimensions = `The room is approximately ${roomDetails.roomLength || 25} feet long, ${roomDetails.roomWidth || 18} feet wide, and has a ceiling height of ${roomDetails.roomHeight || 10} feet.`;
+  const seatingCapacity = `The room's primary function is to host meetings for up to ${roomDetails.capacity || 12} people. The furniture (conference table, chairs) MUST be rendered to realistically and comfortably accommodate this exact number of participants. The scale of the room and furniture must be logical and consistent.`;
+  
+  const equipmentManifest = generateEquipmentManifest(boq);
+
+  const prompt = `
+    **PRIMARY COMMAND:** Generate a single, flawless, photorealistic architectural rendering of a corporate meeting space. The image must be a 100% technically and quantitatively accurate representation of the equipment listed below, integrated into a room that logically matches the specified context.
+
+    **SCENE & CONTEXT:**
+    *   **Room Type:** A wide-angle interior view of ${roomType}.
+    *   **Dimensions & Style:** ${roomDimensions}. The style is modern, clean, and professional, with high-end finishes (e.g., wood, acoustic panels, architectural lighting). The perspective should be from the back of the room, looking towards the main display wall.
+    *   **SEATING (CRITICAL):** ${seatingCapacity} Do not show fewer chairs than the specified capacity.
+
+    **EQUIPMENT MANIFEST & PLACEMENT RULES:**
+    ${equipmentManifest}
+
+    **NON-NEGOTIABLE VISUALIZATION DIRECTIVES (FAILURE TO FOLLOW THESE WILL INVALIDATE THE RESULT):**
+    1.  **QUANTITY IS LAW:** You MUST visualize the **EXACT QUANTITY** of every single item listed in the 'Equipment Manifest'. This is the most important rule. If the manifest says '2x 98-inch Display', you MUST render TWO distinct displays. If it says '10x Ceiling Speakers', you MUST render TEN speaker grilles. This is not a suggestion; it is a command.
+    2.  **LOGICAL PLACEMENT:** Place all equipment according to professional AV standards and the 'Placement Rule' provided for each category in the manifest. The layout must be functional for the room's purpose.
+    3.  **COMPLETE SYSTEM:** Visualize the ENTIRE system. Do not omit infrastructure like ceiling speakers, microphones, or the equipment rack/credenza. These are mandatory components.
+    4.  **MANDATORY LABELING:** Add a small, subtle, and perfectly legible white text label (clean sans-serif font) on or next to each primary piece of technology (displays, cameras, mics, speakers, control panels). The label should identify the item (e.g., "98-inch 4K Display", "PTZ Camera", "Ceiling Microphone", "Touch Control Panel").
+    5.  **NO PEOPLE:** The room must be empty. The focus is exclusively on the room and the technology.
+    6.  **ASPECT RATIO:** The final image must be in a 16:9 landscape aspect ratio.
+  `;
+  
+  const response = await ai.models.generateImages({
+    model: model,
+    prompt: prompt,
+    config: {
+      numberOfImages: 1,
+      outputMimeType: 'image/png',
+      aspectRatio: '16:9',
+    },
+  });
+
+  const base64ImageBytes: string | undefined = response.generatedImages[0]?.image.imageBytes;
+  
+  if (base64ImageBytes) {
+      return `data:image/png;base64,${base64ImageBytes}`;
+  }
+
+  throw new Error('No image was generated by the model. The prompt might have been too complex or rejected.');
 }

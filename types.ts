@@ -73,4 +73,7 @@ export interface Room {
     boq: Boq | null;
     isLoading: boolean;
     error: string | null;
+    isVisualizing: boolean;
+    visualizationImageUrl: string | null;
+    visualizationError: string | null;
 }

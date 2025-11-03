@@ -9,7 +9,7 @@ import TabButton from './components/TabButton';
 import ConfirmModal from './components/ConfirmModal';
 
 import { Boq, BoqItem, ClientDetails as ClientDetailsType, Room } from './types';
-import { generateBoq, refineBoq } from './services/geminiService';
+import { generateBoq, refineBoq, generateRoomVisualization } from './services/geminiService';
 import { exportToXlsx } from './utils/exportToXlsx';
 import SparklesIcon from './components/icons/SparklesIcon';
 import AuthGate from './components/AuthGate';
@@ -51,6 +51,9 @@ const App: React.FC = () => {
       boq: null,
       isLoading: false,
       error: null,
+      isVisualizing: false,
+      visualizationImageUrl: null,
+      visualizationError: null,
     };
     setRooms([...rooms, newRoom]);
     setActiveRoomId(newRoomId);
@@ -139,6 +142,30 @@ const App: React.FC = () => {
     } finally {
         setIsRefining(false);
     }
+  };
+
+  const handleGenerateVisualization = async () => {
+    if (!activeRoom || !activeRoom.boq) return;
+
+    setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, isVisualizing: true, visualizationError: null, visualizationImageUrl: null } : r));
+
+    try {
+      const imageUrl = await generateRoomVisualization(activeRoom.answers, activeRoom.boq);
+      setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, visualizationImageUrl: imageUrl, isVisualizing: false } : r));
+    } catch (error) {
+      console.error('Failed to generate visualization:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, isVisualizing: false, visualizationError: `Failed to generate visualization: ${errorMessage}` } : r));
+    }
+  };
+
+  const handleClearVisualization = () => {
+    if (!activeRoomId) return;
+    setRooms(prevRooms =>
+      prevRooms.map(room =>
+        room.id === activeRoomId ? { ...room, visualizationImageUrl: null, visualizationError: null } : room
+      )
+    );
   };
 
   const handleBoqItemUpdate = (itemIndex: number, updatedValues: Partial<BoqItem>) => {
@@ -329,6 +356,11 @@ const App: React.FC = () => {
                                     onBoqItemUpdate={handleBoqItemUpdate}
                                     onBoqItemAdd={handleBoqItemAdd}
                                     onBoqItemDelete={handleBoqItemDelete}
+                                    onGenerateVisualization={handleGenerateVisualization}
+                                    onClearVisualization={handleClearVisualization}
+                                    isVisualizing={activeRoom.isVisualizing}
+                                    visualizationError={activeRoom.visualizationError}
+                                    visualizationImageUrl={activeRoom.visualizationImageUrl}
                                 />
                             </div>
                         ) : (

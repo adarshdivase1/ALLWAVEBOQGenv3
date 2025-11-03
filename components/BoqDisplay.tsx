@@ -7,6 +7,7 @@ import RefineModal from './RefineModal';
 import WebSearchModal from './WebSearchModal';
 import ImagePreviewModal from './ImagePreviewModal';
 import AutoResizeTextarea from './AutoResizeTextarea';
+import RoomVisualizationModal from './RoomVisualizationModal';
 
 import DownloadIcon from './icons/DownloadIcon';
 import WandIcon from './icons/WandIcon';
@@ -14,6 +15,9 @@ import ImageIcon from './icons/ImageIcon';
 import SearchIcon from './icons/SearchIcon';
 import TrashIcon from './icons/TrashIcon';
 import PlusIcon from './icons/PlusIcon';
+import EyeIcon from './icons/EyeIcon';
+import LoaderIcon from './icons/LoaderIcon';
+
 
 interface BoqDisplayProps {
   boq: Boq | null;
@@ -25,16 +29,23 @@ interface BoqDisplayProps {
   onBoqItemUpdate: (itemIndex: number, updatedValues: Partial<BoqItem>) => void;
   onBoqItemAdd: () => void;
   onBoqItemDelete: (itemIndex: number) => void;
+  onGenerateVisualization: () => void;
+  onClearVisualization: () => void;
+  isVisualizing: boolean;
+  visualizationError: string | null;
+  visualizationImageUrl: string | null;
 }
 
 const BoqDisplay: React.FC<BoqDisplayProps> = ({ 
-    boq, onRefine, isRefining, onExport, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete 
+    boq, onRefine, isRefining, onExport, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
+    onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl 
 }) => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [exchangeRates, setExchangeRates] = useState<Record<Currency, number> | null>(null);
   const [isRefineModalOpen, setIsRefineModalOpen] = useState(false);
   const [isWebSearchModalOpen, setIsWebSearchModalOpen] = useState(false);
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const [isVisualizationModalOpen, setIsVisualizationModalOpen] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<BoqItem | null>(null);
 
@@ -45,6 +56,29 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
     };
     fetchRates();
   }, []);
+  
+  useEffect(() => {
+    // Open the modal automatically only when a new visualization process starts
+    if (isVisualizing) {
+      setIsVisualizationModalOpen(true);
+    }
+  }, [isVisualizing]);
+
+  const handleVisualizationModalClose = () => {
+    setIsVisualizationModalOpen(false);
+    // State is no longer cleared on close, allowing the image to persist.
+  };
+
+  const handleVisualizeButtonClick = () => {
+    if (visualizationImageUrl) {
+      // If an image already exists, just open the modal to view it.
+      setIsVisualizationModalOpen(true);
+    } else {
+      // Otherwise, start the generation process (which will also open the modal via useEffect).
+      onGenerateVisualization();
+    }
+  };
+
 
   const currencySymbol = useMemo(() => {
     return CURRENCIES.find(c => c.value === selectedCurrency)?.symbol || '$';
@@ -161,6 +195,14 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
                 className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
                 <WandIcon /> Refine with AI
+            </button>
+             <button
+                onClick={handleVisualizeButtonClick}
+                disabled={!boq || boq.length === 0 || isVisualizing}
+                className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+                {isVisualizing ? <LoaderIcon /> : <EyeIcon />}
+                {isVisualizing ? 'Visualizing...' : (visualizationImageUrl ? 'View Visualization' : 'Visualize Room')}
             </button>
             <button
                 onClick={onExport}
@@ -315,6 +357,15 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
           onClose={() => setIsImagePreviewOpen(false)}
         />
       )}
+      <RoomVisualizationModal
+        isOpen={isVisualizationModalOpen}
+        onClose={handleVisualizationModalClose}
+        isLoading={isVisualizing}
+        error={visualizationError}
+        imageUrl={visualizationImageUrl}
+        onRegenerate={onGenerateVisualization}
+        onDelete={onClearVisualization}
+      />
     </>
   );
 };
