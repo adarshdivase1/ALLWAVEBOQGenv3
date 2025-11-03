@@ -1,0 +1,67 @@
+@media print {
+    body {
+        background-image: none !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* Hide all UI elements that shouldn't be printed */
+    header, 
+    nav,
+    .no-print,
+    #root > div > main > div.grid.grid-cols-1.md\\:grid-cols-4.gap-6 > div.md\\:col-span-1.space-y-4, /* Room list sidebar */
+    #root > div > main > div:first-child > div.flex.items-center.gap-4.py-2.sm\\:py-0, /* Save/Load buttons */
+    #root > div > div:last-child, /* AuthGate wrapper if any extra div */
+    div[class*="fixed inset-0"] /* Hide all modals */
+    {
+        display: none !important;
+    }
+
+    main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Ensure the main content area and BOQ display take up full width */
+    .md\\:col-span-3 {
+        width: 100% !important;
+        grid-column: span 4 / span 4 !important;
+    }
+
+    /* Reset styles for printable sections */
+    .bg-slate-800, .bg-slate-900 {
+        background-color: transparent !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, span, strong, label, div, td, th {
+        color: #000000 !important;
+    }
+    
+    table, thead, tbody, tfoot, tr, td, th {
+        border-color: #ccc !important;
+    }
+
+    /* Make input fields look like plain text */
+    input, textarea {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 2px 0 !important;
+        -webkit-appearance: none;
+        appearance: none;
+        resize: none;
+        color: #000 !important;
+    }
+    
+    /* Ensure the table doesn't get cut off */
+    .overflow-x-auto {
+        overflow: visible !important;
+    }
+
+    @page {
+        margin: 0.5in;
+    }
+}

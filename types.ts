@@ -66,14 +66,41 @@ export interface ClientDetails {
     keyComments: string;
 }
 
+export interface ValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  suggestions: string[];
+  missingComponents: string[];
+}
+
 export interface Room {
     id: string;
     name: string;
-    answers: Record<string, any>;
+    answers: { [key: string]: any };
     boq: Boq | null;
     isLoading: boolean;
     error: string | null;
     isVisualizing: boolean;
     visualizationImageUrl: string | null;
     visualizationError: string | null;
+    isValidating: boolean;
+    validationResult: ValidationResult | null;
 }
+
+export interface RoomTemplate {
+  id: string;
+  name: string;
+  description: string;
+  details: {
+    capacity: string;
+    display: string;
+  };
+  answers: Record<string, any>;
+}
+
+export interface Toast {
+  message: string;
+  type: 'success' | 'error';
+}
+
+export type Theme = 'light' | 'dark';

@@ -15,7 +15,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
     // API Key Check - This is a developer-facing check.
     if (!process.env.API_KEY) {
         return (
-            <div className="flex items-center justify-center h-screen text-white">
+            <div className="flex items-center justify-center h-screen text-white bg-slate-900">
                 <div className="text-center p-8 bg-slate-800 rounded-lg shadow-xl">
                     <h1 className="text-2xl font-bold text-red-500 mb-4">Configuration Error</h1>
                     <p className="text-slate-300">
@@ -61,16 +61,16 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
 
     // If not authenticated, show the email login form
     return (
-        <div className="flex items-center justify-center min-h-screen text-slate-200">
-            <div className="w-full max-w-md p-8 space-y-8 bg-slate-800 rounded-lg shadow-2xl border border-slate-700">
+        <div className="flex items-center justify-center min-h-screen text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900">
+            <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700">
                 <div>
-                    <h1 className="text-3xl font-bold text-center text-white">
-                        <span className="text-blue-400">Gen</span>BOQ
+                    <h1 className="text-3xl font-bold text-center text-slate-900 dark:text-white">
+                        <span className="text-blue-600 dark:text-blue-400">Gen</span>BOQ
                     </h1>
-                    <p className="mt-2 text-center text-sm text-slate-400">
+                    <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
                         AI-Powered AV Bill of Quantities Generator
                     </p>
-                    <p className="mt-4 text-center text-sm text-slate-500">
+                    <p className="mt-4 text-center text-sm text-slate-400 dark:text-slate-500">
                         Please verify your identity with a company email.
                     </p>
                 </div>
@@ -86,7 +86,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-slate-700 bg-slate-900 placeholder-slate-500 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 text-slate-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                                 placeholder="your.name@allwaveav.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +96,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
                     </div>
 
                     {error && (
-                        <div className="text-red-400 text-sm text-center pt-2">
+                        <div className="text-red-500 dark:text-red-400 text-sm text-center pt-2">
                             {error}
                         </div>
                     )}
@@ -104,7 +104,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-blue-500 disabled:bg-slate-500 disabled:cursor-not-allowed mt-4"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-blue-500 disabled:bg-slate-400 dark:disabled:bg-slate-500 disabled:cursor-not-allowed mt-4"
                             disabled={isLoading || !email}
                         >
                             {isLoading ? 'Verifying...' : 'Grant Access'}

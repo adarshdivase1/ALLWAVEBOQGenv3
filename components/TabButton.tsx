@@ -7,8 +7,8 @@ interface TabButtonProps {
 }
 
 const TabButton: React.FC<TabButtonProps> = ({ isActive, onClick, children }) => {
-  const activeClasses = 'border-blue-500 text-blue-400';
-  const inactiveClasses = 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-500';
+  const activeClasses = 'border-blue-500 text-blue-600 dark:text-blue-400';
+  const inactiveClasses = 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-500';
 
   return (
     <button

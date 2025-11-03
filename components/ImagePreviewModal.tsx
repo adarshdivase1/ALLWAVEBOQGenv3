@@ -12,11 +12,11 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ imageUrl, onClose
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 p-4 rounded-lg shadow-xl max-w-3xl max-h-[90vh] border border-slate-700" 
+        className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-xl max-w-3xl max-h-[90vh] border border-slate-200 dark:border-slate-700" 
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-end mb-2">
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-2xl leading-none">&times;</button>
         </div>
         <img 
           src={imageUrl} 

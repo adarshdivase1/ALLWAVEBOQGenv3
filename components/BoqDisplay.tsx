@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Boq, BoqItem, Currency, CURRENCIES } from '../types';
+import { Boq, BoqItem, Currency, CURRENCIES, ValidationResult } from '../types';
 import { getExchangeRates } from '../utils/currency';
 
 import CurrencySelector from './CurrencySelector';
@@ -8,6 +8,7 @@ import WebSearchModal from './WebSearchModal';
 import ImagePreviewModal from './ImagePreviewModal';
 import AutoResizeTextarea from './AutoResizeTextarea';
 import RoomVisualizationModal from './RoomVisualizationModal';
+import ValidationFeedback from './ValidationFeedback';
 
 import DownloadIcon from './icons/DownloadIcon';
 import WandIcon from './icons/WandIcon';
@@ -17,6 +18,7 @@ import TrashIcon from './icons/TrashIcon';
 import PlusIcon from './icons/PlusIcon';
 import EyeIcon from './icons/EyeIcon';
 import LoaderIcon from './icons/LoaderIcon';
+import PrintIcon from './icons/PrintIcon';
 
 
 interface BoqDisplayProps {
@@ -34,11 +36,14 @@ interface BoqDisplayProps {
   isVisualizing: boolean;
   visualizationError: string | null;
   visualizationImageUrl: string | null;
+  isValidating: boolean;
+  validationResult: ValidationResult | null;
 }
 
 const BoqDisplay: React.FC<BoqDisplayProps> = ({ 
     boq, onRefine, isRefining, onExport, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
-    onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl 
+    onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl,
+    isValidating, validationResult
 }) => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [exchangeRates, setExchangeRates] = useState<Record<Currency, number> | null>(null);
@@ -154,82 +159,102 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
     setIsImagePreviewOpen(true);
   };
 
-  const inputClass = "block w-full text-sm bg-slate-700 border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md text-white py-1 px-2";
+  const inputClass = "block w-full text-sm bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md text-slate-900 dark:text-white py-1 px-2";
   const numberInputClass = `${inputClass} text-center`;
 
 
   return (
     <>
-      <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-          <h2 className="text-2xl font-bold text-white">Generated Bill of Quantities</h2>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700" id="boq-display-section">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 no-print">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Generated Bill of Quantities</h2>
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-                <label htmlFor="margin-input" className="text-sm font-medium text-slate-300">Project Margin:</label>
+                <label htmlFor="margin-input" className="text-sm font-medium text-slate-600 dark:text-slate-300">Project Margin:</label>
                 <div className="relative rounded-md shadow-sm">
                     <input
                         type="number"
                         name="margin-input"
                         id="margin-input"
-                        className="block w-24 pl-3 pr-8 py-2 text-base bg-slate-700 border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-white"
+                        className="block w-24 pl-3 pr-8 py-2 text-base bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-slate-900 dark:text-white"
                         placeholder="0"
                         value={margin}
                         onChange={(e) => onMarginChange(parseFloat(e.target.value) || 0)}
                         min="0"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-slate-400 sm:text-sm">%</span>
+                        <span className="text-slate-500 dark:text-slate-400 sm:text-sm">%</span>
                     </div>
                 </div>
             </div>
             <CurrencySelector selectedCurrency={selectedCurrency} onCurrencyChange={setSelectedCurrency} disabled={!exchangeRates} />
             <button
                 onClick={handleOpenWebSearch}
-                className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500"
             >
                 <SearchIcon className="h-5 w-5 mr-2" /> Web Search
             </button>
             <button
                 onClick={() => setIsRefineModalOpen(true)}
                 disabled={!boq || boq.length === 0}
-                className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
             >
                 <WandIcon /> Refine with AI
             </button>
              <button
                 onClick={handleVisualizeButtonClick}
                 disabled={!boq || boq.length === 0 || isVisualizing}
-                className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
             >
                 {isVisualizing ? <LoaderIcon /> : <EyeIcon />}
                 {isVisualizing ? 'Visualizing...' : (visualizationImageUrl ? 'View Visualization' : 'Visualize Room')}
             </button>
             <button
+                onClick={() => window.print()}
+                disabled={!boq || boq.length === 0}
+                title="Print BOQ"
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+                <PrintIcon /> Print
+            </button>
+            <button
                 onClick={onExport}
                 disabled={!boq || boq.length === 0}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-green-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed"
+                title="Export to XLSX (Ctrl+E)"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-green-500 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:text-slate-100 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
             >
-                <DownloadIcon /> Export
+                <DownloadIcon />
+                Export
             </button>
           </div>
         </div>
 
+        {isValidating && (
+            <div className="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 px-4 py-3 rounded-lg relative my-4 flex items-center justify-center no-print" role="status">
+                <LoaderIcon />
+                <span className="ml-2">Validating BOQ against best practices...</span>
+            </div>
+        )}
+        
+        {validationResult && !isValidating && <ValidationFeedback result={validationResult} />}
+
+
         {boq && boq.length > 0 ? (
             <>
             <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-700">
-                <thead className="bg-slate-900">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead className="bg-slate-100 dark:bg-slate-900">
                 <tr>
                     {['Category', 'Item Description', 'Brand', 'Model', 'Qty', 'Unit Price (USD)', 'Item Margin (%)', 'Final Unit Price', 'Final Total Price', 'Actions'].map(header => (
-                    <th key={header} scope="col" className="px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    <th key={header} scope="col" className="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                         {header}
                     </th>
                     ))}
                 </tr>
                 </thead>
-                <tbody className="bg-slate-800 divide-y divide-slate-700">
+                <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                 {processedBoq.map((item, index) => (
-                    <tr key={index} className="hover:bg-slate-700/50 align-middle">
+                    <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 align-middle">
                     <td className="px-3 py-2 whitespace-nowrap"><input type="text" value={item.category} onChange={(e) => onBoqItemUpdate(index, { category: e.target.value })} className={inputClass} style={{minWidth: '120px'}} /></td>
                     <td className="px-3 py-2">
                         <AutoResizeTextarea
@@ -253,10 +278,10 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                         <div className="relative">
-                        <span className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-slate-400">$</span>
+                        <span className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-slate-500 dark:text-slate-400">$</span>
                         <input
                             type="number"
-                            className="block w-full text-sm bg-slate-700 border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md text-white py-1 pl-5 pr-2"
+                            className="block w-full text-sm bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md text-slate-900 dark:text-white py-1 pl-5 pr-2"
                             value={boq[index].unitPrice}
                             onChange={(e) => {
                                 const newUnitPrice = parseFloat(e.target.value) || 0;
@@ -285,51 +310,51 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
                         />
                         </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-300 text-right">{currencySymbol}{item.unitPrice.toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-300 text-right font-semibold">{currencySymbol}{item.totalPrice.toFixed(2)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-400 space-x-1 flex items-center">
-                        <button onClick={() => handleImageClick(item)} className="p-1 hover:text-blue-400" title="Preview Image"><ImageIcon /></button>
-                        <button onClick={() => handleFetchDetails(item)} className="p-1 hover:text-green-400" title="Fetch Details"><SearchIcon /></button>
-                        <button onClick={() => onBoqItemDelete(index)} className="p-1 hover:text-red-500" title="Delete Item"><TrashIcon /></button>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 text-right">{currencySymbol}{item.unitPrice.toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-800 dark:text-slate-300 text-right font-semibold">{currencySymbol}{item.totalPrice.toFixed(2)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 space-x-1 flex items-center no-print">
+                        <button onClick={() => handleImageClick(item)} className="p-1 hover:text-blue-500 dark:hover:text-blue-400" title="Preview Image"><ImageIcon /></button>
+                        <button onClick={() => handleFetchDetails(item)} className="p-1 hover:text-green-500 dark:hover:text-green-400" title="Fetch Details"><SearchIcon /></button>
+                        <button onClick={() => onBoqItemDelete(index)} className="p-1 hover:text-red-600 dark:hover:text-red-500" title="Delete Item"><TrashIcon /></button>
                     </td>
                     </tr>
                 ))}
                 </tbody>
-                <tfoot className="bg-slate-900">
+                <tfoot className="bg-slate-100 dark:bg-slate-900">
                     <tr>
-                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-300 uppercase">Subtotal</td>
-                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-300">{currencySymbol}{totals.subTotal.toFixed(2)}</td>
+                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-300 uppercase">Subtotal</td>
+                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{currencySymbol}{totals.subTotal.toFixed(2)}</td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-300 uppercase">Total Margin</td>
-                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-300">{currencySymbol}{totals.marginAmount.toFixed(2)}</td>
+                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-300 uppercase">Total Margin</td>
+                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{currencySymbol}{totals.marginAmount.toFixed(2)}</td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-300 uppercase">GST (18%)</td>
-                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-300">{currencySymbol}{totals.gstAmount.toFixed(2)}</td>
+                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-300 uppercase">GST (18%)</td>
+                        <td className="px-6 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{currencySymbol}{totals.gstAmount.toFixed(2)}</td>
                         <td></td>
                     </tr>
-                    <tr className="border-t-2 border-slate-700">
-                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-bold text-white uppercase">Grand Total</td>
-                        <td className="px-6 py-3 text-right text-sm font-bold text-white">{currencySymbol}{totals.grandTotal.toFixed(2)}</td>
+                    <tr className="border-t-2 border-slate-200 dark:border-slate-700">
+                        <td colSpan={8} className="px-6 py-3 text-right text-sm font-bold text-slate-900 dark:text-white uppercase">Grand Total</td>
+                        <td className="px-6 py-3 text-right text-sm font-bold text-slate-900 dark:text-white">{currencySymbol}{totals.grandTotal.toFixed(2)}</td>
                         <td></td>
                     </tr>
                 </tfoot>
             </table>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 no-print">
                 <button
                     onClick={onBoqItemAdd}
-                    className="inline-flex items-center px-4 py-2 border border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500"
                 >
                     <PlusIcon /> Add Item
                 </button>
             </div>
             </>
         ) : (
-            <div className="text-center py-12 text-slate-400 border-t border-slate-700 mt-4">
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 mt-4 no-print">
                 <h3 className="text-lg font-semibold">This BOQ is empty.</h3>
                 <p>Generate a full BOQ using the questionnaire, or add individual items using "Web Search".</p>
             </div>
