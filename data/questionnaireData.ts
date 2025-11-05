@@ -1,3 +1,4 @@
+
 import type { QuestionnaireSection } from '../types';
 
 export const questionnaire: QuestionnaireSection[] = [
@@ -46,6 +47,22 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Architecturally Integrated (Hide equipment where possible)', value: 'integrated' },
         ],
       },
+      {
+        id: 'mountRackBrands',
+        text: 'Are there any preferred Mount & Rack brands?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Chief', value: 'Chief' },
+          { label: 'Milestone', value: 'Milestone' },
+          { label: 'B-Tech AV Mounts', value: 'B-Tech' },
+          { label: 'Heckler Design', value: 'Heckler' },
+          { label: 'LUMI', value: 'LUMI' },
+          { label: 'Drita', value: 'Drita' },
+          { label: 'Valrack', value: 'Valrack' },
+          { label: 'Middle Atlantic', value: 'Middle Atlantic' },
+          { label: 'Panduit', value: 'Panduit' },
+        ]
+      }
     ],
   },
   {
@@ -67,17 +84,20 @@ export const questionnaire: QuestionnaireSection[] = [
         text: 'Are there any preferred display brands?',
         type: 'multiple-choice',
         options: [
-            { label: 'Samsung', value: 'Samsung' },
-            { label: 'LG', value: 'LG' },
-            { label: 'Sony', value: 'Sony' },
-            { label: 'BenQ', value: 'BenQ' },
-            { label: 'ViewSonic', value: 'ViewSonic' },
-            { label: 'Sharp', value: 'Sharp' },
-            { label: 'Newline', value: 'Newline' },
-            { label: 'NEC', value: 'NEC' },
-            { label: 'Epson (Projectors)', value: 'Epson' },
-            { label: 'Christie', value: 'Christie' },
-            { label: 'Absen (Video Walls)', value: 'Absen' },
+          { label: 'Samsung', value: 'Samsung' },
+          { label: 'LG', value: 'LG' },
+          { label: 'Sony', value: 'Sony' },
+          { label: 'BenQ', value: 'BenQ' },
+          { label: 'ViewSonic', value: 'ViewSonic' },
+          { label: 'Sharp', value: 'Sharp' },
+          { label: 'Newline', value: 'Newline' },
+          { label: 'NEC', value: 'NEC' },
+          { label: 'Dell', value: 'Dell' },
+          { label: 'DTEN', value: 'DTEN' },
+          { label: 'AVOCOR', value: 'AVOCOR' },
+          { label: 'Epson (Projectors)', value: 'Epson' },
+          { label: 'Christie (Projectors)', value: 'Christie' },
+          { label: 'Absen (Video Walls)', value: 'Absen' },
         ],
       },
        {
@@ -127,6 +147,9 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Jabra', value: 'Jabra' },
             { label: 'MAXHUB', value: 'MAXHUB' },
             { label: 'Huddly', value: 'Huddly' },
+            { label: 'DTEN', value: 'DTEN' },
+            { label: 'Peoplelink', value: 'Peoplelink' },
+            { label: 'Microsoft (Teams)', value: 'Microsoft' },
         ]
       },
       {
@@ -169,6 +192,11 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Audio-Technica', value: 'Audio-Technica' },
             { label: 'Yamaha', value: 'Yamaha' },
             { label: 'Fohhn', value: 'Fohhn' },
+            { label: 'BSS', value: 'BSS' },
+            { label: 'Clearcom', value: 'Clearcom' },
+            { label: 'Dali', value: 'Dali' },
+            { label: 'Studio Master', value: 'Studio Master' },
+            { label: 'Logic', value: 'Logic' },
         ]
       },
       {
@@ -208,6 +236,28 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
+        id: 'connectivityBrands',
+        text: 'Any preferred connectivity or infrastructure brands?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Lightware', value: 'Lightware' },
+          { label: 'Kramer', value: 'Kramer' },
+          { label: 'ATEN', value: 'ATEN' },
+          { label: 'Barco (ClickShare)', value: 'Barco' },
+          { label: 'Airtame', value: 'Airtame' },
+          { label: 'Apple (AirPlay)', value: 'Apple' },
+          { label: 'Inogeni', value: 'Inogeni' },
+          { label: 'Magewell', value: 'Magewell' },
+          { label: 'Atlona', value: 'Atlona' },
+          { label: 'C2G', value: 'C2G' },
+          { label: 'BlackBox', value: 'BlackBox' },
+          { label: 'Belden', value: 'Belden' },
+          { label: 'Panduit', value: 'Panduit' },
+          { label: 'Liberty', value: 'Liberty' },
+          { label: 'Brightsign', value: 'Brightsign' },
+        ]
+      },
+      {
         id: 'controlSystem',
         text: 'How should the room AV system be controlled?',
         type: 'select',
@@ -229,12 +279,48 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Kramer', value: 'Kramer' },
             { label: 'QSC', value: 'QSC' },
             { label: 'CUE', value: 'CUE' },
+            { label: 'Lutron', value: 'Lutron' },
         ]
       },
     ],
   },
   {
-    title: '6. Additional Features',
+    title: '6. Lighting & Acoustics',
+    questions: [
+        {
+          id: 'lightingControl',
+          text: 'Is integrated control of the room\'s lighting required?',
+          type: 'select',
+          options: [
+            { label: 'No, lighting is separate', value: 'no' },
+            { label: 'Basic Dimming Control', value: 'dimming' },
+            { label: 'Full Integration (Scenes, Presets, etc.)', value: 'full_integration' },
+          ],
+        },
+        {
+          id: 'specialtyLighting',
+          text: 'Are there any special lighting requirements?',
+          type: 'multiple-choice',
+          options: [
+            { label: 'Stage / Presenter Lighting', value: 'stage_lighting' },
+            { label: 'Architectural / Mood Lighting', value: 'architectural_lighting' },
+            { label: 'Whiteboard / Focus Area Lighting', value: 'focus_lighting' },
+          ],
+        },
+        {
+            id: 'acousticNeeds',
+            text: 'How would you describe the acoustic environment?',
+            type: 'select',
+            options: [
+                { label: 'Standard office (some echo)', value: 'standard' },
+                { label: 'Good (minimal echo, quiet)', value: 'good' },
+                { label: 'Poor (very echoey, noisy, hard surfaces)', value: 'poor' },
+            ]
+        }
+    ],
+  },
+  {
+    title: '7. Additional Features',
     questions: [
         {
           id: 'roomScheduling',

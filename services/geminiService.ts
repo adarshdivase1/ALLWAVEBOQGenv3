@@ -12,12 +12,16 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const generateBoq = async (requirements: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `Based on the following requirements for an AV room, generate a comprehensive Bill of Quantities (BOQ). 
+    const prompt = `Based on the following requirements for an AV room, generate a comprehensive Bill of Quantities (BOQ). This must include all necessary AV equipment, accessories, AND critical environmental components like lighting and acoustic treatment where applicable.
     
     Requirements: "${requirements}"
 
+    Your analysis MUST consider the room type, dimensions, and intended use to determine the necessity for:
+    1.  **Acoustic Treatment:** If the room is large, has hard surfaces, is described as echoey, or is intended for high-quality audio (e.g., boardrooms, auditoriums, town halls), you MUST include line items for acoustic treatment (e.g., acoustic panels, diffusers, bass traps). Specify quantities based on a reasonable estimation for the room size.
+    2.  **Lighting:** If the requirements mention presentations, video conferencing, or stages, you MUST include appropriate lighting fixtures (e.g., spotlights for a presenter, dimmable architectural lighting) and the necessary control systems (e.g., DMX controllers, integration components for the main control system).
+
     The BOQ should be an array of objects, where each object represents a line item and has the following properties:
-    - category: string (e.g., "Display", "Audio", "Video Conferencing", "Control", "Cabling & Infrastructure")
+    - category: string (e.g., "Display", "Audio", "Acoustic Treatment", "Lighting & Control", "Cabling & Infrastructure")
     - itemDescription: string (A clear and concise description of the item)
     - brand: string (A well-known, reputable brand for the item)
     - model: string (A specific, valid model number for the item)
@@ -203,10 +207,11 @@ export const validateBoq = async (boq: Boq, requirements: string): Promise<Valid
     ${JSON.stringify(boq, null, 2)}
 
     Perform the following analysis:
-    1.  **Completeness Check:** Are there any crucial components missing for a fully functional system? (e.g., mounts for displays, correct cables, power distribution units, a control processor if a touch panel is listed, etc.).
-    2.  **Compatibility Check:** Are the chosen components generally compatible? (e.g., a Cisco video conferencing codec with a non-certified camera). Flag potential mismatches.
-    3.  **Best Practices:** Does the BOQ align with AV industry best practices for the given room type?
-    4.  **Requirement Mismatch:** Does any part of the BOQ contradict the user's stated requirements?
+    1.  **Completeness Check:** Are there any crucial AV components missing for a fully functional system? (e.g., mounts for displays, correct cables, power distribution units, a control processor if a touch panel is listed, etc.).
+    2.  **Environmental Check (CRITICAL):** Based on the room type (e.g., Auditorium, Town Hall, Boardroom, large conference room) and the requirements, have **acoustic treatment** and **specialized lighting** been considered? If they appear to be missing from the BOQ but should be present, list them under 'missingComponents' and add a warning. It is critical that large or acoustically challenging spaces have these elements for a successful project.
+    3.  **Compatibility Check:** Are the chosen components generally compatible? (e.g., a Cisco video conferencing codec with a non-certified camera). Flag potential mismatches.
+    4.  **Best Practices:** Does the BOQ align with AV industry best practices for the given room type?
+    5.  **Requirement Mismatch:** Does any part of the BOQ contradict the user's stated requirements?
 
     Provide your findings in a structured JSON format with the following keys:
     - isValid: boolean (true if there are no major issues, false otherwise. Be strict - if there are any warnings or missing components, this should be false).

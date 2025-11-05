@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoaderIcon from './icons/LoaderIcon';
 import WandIcon from './icons/WandIcon';
 
@@ -11,6 +11,12 @@ interface RefineModalProps {
 
 const RefineModal: React.FC<RefineModalProps> = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [prompt, setPrompt] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setPrompt(''); // Clear prompt text when modal opens
+    }
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

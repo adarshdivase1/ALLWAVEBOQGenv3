@@ -18,6 +18,7 @@ import PlusIcon from './icons/PlusIcon';
 import EyeIcon from './icons/EyeIcon';
 import LoaderIcon from './icons/LoaderIcon';
 import PrintIcon from './icons/PrintIcon';
+import CheckCircleIcon from './icons/CheckCircleIcon';
 
 
 interface BoqDisplayProps {
@@ -31,6 +32,7 @@ interface BoqDisplayProps {
   onBoqItemDelete: (itemIndex: number) => void;
   onGenerateVisualization: () => void;
   onClearVisualization: () => void;
+  onValidateBoq: () => void;
   isVisualizing: boolean;
   visualizationError: string | null;
   visualizationImageUrl: string | null;
@@ -41,7 +43,7 @@ interface BoqDisplayProps {
 const BoqDisplay: React.FC<BoqDisplayProps> = ({ 
     boq, onRefine, isRefining, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
     onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl,
-    isValidating, validationResult
+    onValidateBoq, isValidating, validationResult
 }) => {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [exchangeRates, setExchangeRates] = useState<Record<Currency, number> | null>(null);
@@ -198,6 +200,14 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
                 className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
             >
                 <WandIcon /> Refine with AI
+            </button>
+            <button
+                onClick={onValidateBoq}
+                disabled={!boq || boq.length === 0 || isValidating}
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+                {isValidating ? <LoaderIcon /> : <CheckCircleIcon className="h-5 w-5 mr-2" />}
+                {isValidating ? 'Validating...' : (validationResult ? 'Re-validate BOQ' : 'Validate BOQ')}
             </button>
              <button
                 onClick={handleVisualizeButtonClick}
