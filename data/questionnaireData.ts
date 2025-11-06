@@ -221,6 +221,15 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
+        id: 'matrixSwitcherRequired',
+        text: 'Is a dedicated matrix switcher required for complex routing (e.g., multiple sources to multiple displays)?',
+        type: 'select',
+        options: [
+          { label: 'Yes, a matrix switcher is necessary', value: 'yes' },
+          { label: 'No, simple source selection is sufficient', value: 'no' },
+        ],
+      },
+      {
         id: 'cableCubbyPorts',
         text: 'Which ports are required in the tabletop cable cubby/box?',
         type: 'multiple-choice',

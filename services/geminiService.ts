@@ -40,6 +40,7 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
             *   If you choose **Crestron** for control (e.g., CP4), you MUST use Crestron for AV-over-IP (e.g., DM-NVX) and compatible DSPs.
             *   If you choose **Q-SYS** for audio and control (e.g., Core Nano), you MUST use Q-SYS for video (e.g., NV-Series) and Q-SYS peripherals.
         *   **This is the most important rule. A design with conflicting core components is an automatic failure.**
+        *   **Matrix Switcher Logic:** If the requirements explicitly state \`'matrixSwitcherRequired: yes'\`, you MUST incorporate a dedicated matrix switcher compatible with your chosen ecosystem (e.g., a Crestron DMPS, Extron DTP CrossPoint). This is mandatory for complex routing needs (like multiple sources to multiple displays) and this user input overrides any simpler, built-in switching solutions that other components may offer.
 
     3.  **MODEL & VERSIONING:**
         *   You MUST specify current-generation, commercially available products. Do not use legacy or end-of-life models.
