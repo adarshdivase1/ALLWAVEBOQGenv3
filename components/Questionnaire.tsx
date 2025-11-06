@@ -20,7 +20,8 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ onAnswersChange, initialA
   
   const handleMultiChoiceChange = (id: string, value: string) => {
     setAnswers(prev => {
-      const currentSelection = prev[id] || [];
+      // Ensure currentSelection is always an array to prevent type errors
+      const currentSelection = Array.isArray(prev[id]) ? prev[id] : [];
       const newSelection = currentSelection.includes(value)
         ? currentSelection.filter((item: string) => item !== value)
         : [...currentSelection, value];

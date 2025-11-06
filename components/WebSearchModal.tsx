@@ -106,19 +106,26 @@ const WebSearchModal: React.FC<WebSearchModalProps> = ({ isOpen, onClose, initia
               {productDetails.sources && productDetails.sources.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <h3 className="text-md font-semibold text-slate-600 dark:text-slate-300 mb-3">Sources from Web Search:</h3>
-                  <div className="space-y-2">
-                    {productDetails.sources.map((source, index) => (
-                      <div key={index}>
-                        {source.web && (
-                          <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="flex items-start p-2 rounded-md bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <LinkIcon />
-                            <span className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all">
-                              {source.web.title || source.web.uri}
-                            </span>
-                          </a>
-                        )}
-                      </div>
-                    ))}
+                   <div className="space-y-3">
+                    {productDetails.sources.map((source, index) =>
+                      source.web ? (
+                        <a
+                          key={index}
+                          href={source.web.uri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block border-2 border-slate-200 dark:border-slate-700 rounded-lg p-4 transition-all duration-200 hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 group"
+                        >
+                          <p className="font-bold text-base text-blue-600 dark:text-blue-400 group-hover:underline flex items-center">
+                            <LinkIcon /> 
+                            <span className="ml-2">{source.web.title || "Untitled Source"}</span>
+                          </p>
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 break-all">
+                            {source.web.uri}
+                          </p>
+                        </a>
+                      ) : null
+                    )}
                   </div>
                 </div>
               )}

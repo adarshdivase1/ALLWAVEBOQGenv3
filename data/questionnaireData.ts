@@ -1,4 +1,5 @@
 
+
 import type { QuestionnaireSection } from '../types';
 
 export const questionnaire: QuestionnaireSection[] = [
@@ -47,22 +48,6 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Architecturally Integrated (Hide equipment where possible)', value: 'integrated' },
         ],
       },
-      {
-        id: 'mountRackBrands',
-        text: 'Are there any preferred Mount & Rack brands?',
-        type: 'multiple-choice',
-        options: [
-          { label: 'Chief', value: 'Chief' },
-          { label: 'Milestone', value: 'Milestone' },
-          { label: 'B-Tech AV Mounts', value: 'B-Tech' },
-          { label: 'Heckler Design', value: 'Heckler' },
-          { label: 'LUMI', value: 'LUMI' },
-          { label: 'Drita', value: 'Drita' },
-          { label: 'Valrack', value: 'Valrack' },
-          { label: 'Middle Atlantic', value: 'Middle Atlantic' },
-          { label: 'Panduit', value: 'Panduit' },
-        ]
-      }
     ],
   },
   {
@@ -71,7 +56,7 @@ export const questionnaire: QuestionnaireSection[] = [
       {
         id: 'displayType',
         text: 'What kind of main display is needed?',
-        type: 'multiple-choice',
+        type: 'select',
         options: [
           { label: 'Single Large Format Display (LFD)', value: 'single_lfd' },
           { label: 'Dual Large Format Displays (LFDs)', value: 'dual_lfd' },
@@ -236,6 +221,19 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
+        id: 'cableCubbyPorts',
+        text: 'Which ports are required in the tabletop cable cubby/box?',
+        type: 'multiple-choice',
+        options: [
+            { label: 'HDMI Input', value: 'hdmi_input' },
+            { label: 'USB-C (with video & power delivery)', value: 'usbc_video_power' },
+            { label: 'USB-A (for peripherals)', value: 'usba_peripheral' },
+            { label: 'DisplayPort Input', value: 'displayport_input' },
+            { label: 'RJ-45 Network Jack', value: 'network_jack' },
+            { label: 'AC Power Outlet', value: 'ac_power' },
+        ],
+      },
+      {
         id: 'connectivityBrands',
         text: 'Any preferred connectivity or infrastructure brands?',
         type: 'multiple-choice',
@@ -285,7 +283,71 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '6. Lighting & Acoustics',
+    title: '6. Mounts & Racks',
+    questions: [
+        {
+          id: 'mountAndRackBrands',
+          text: 'Are there any preferred Mount & Rack brands?',
+          type: 'multiple-choice',
+          options: [
+            { label: 'Chief', value: 'Chief' },
+            { label: 'Milestone', value: 'Milestone' },
+            { label: 'B-Tech AV Mounts', value: 'B-Tech' },
+            { label: 'Heckler Design', value: 'Heckler' },
+            { label: 'LUMI', value: 'LUMI' },
+            { label: 'Drita', value: 'Drita' },
+            { label: 'Valrack', value: 'Valrack' },
+            { label: 'Middle Atlantic', value: 'Middle Atlantic' },
+            { label: 'Panduit', value: 'Panduit' },
+            { label: 'Rittal', value: 'Rittal' },
+            { label: 'APC', value: 'APC' },
+          ]
+        },
+        {
+            id: 'displayMountType',
+            text: 'What type of mount is needed for the main display?',
+            type: 'select',
+            options: [
+                { label: 'Fixed / Low-Profile Wall Mount', value: 'fixed_wall' },
+                { label: 'Tilting Wall Mount', value: 'tilting_wall' },
+                { label: 'Articulating Arm Wall Mount (for single displays)', value: 'articulating_wall' },
+                { label: 'Push-Pull / Serviceable Video Wall Mount', value: 'video_wall_mount_push_pull' },
+                { label: 'Recessed In-Wall Mount (for clean aesthetics)', value: 'recessed_wall' },
+                { label: 'Ceiling Mount', value: 'ceiling_mount' },
+                { label: 'Mobile Cart / Stand', value: 'mobile_cart' },
+                { label: 'No specific mount needed (e.g., display has stand)', value: 'none' },
+            ],
+        },
+        {
+            id: 'cameraMounting',
+            text: 'How should the video conferencing camera be mounted?',
+            type: 'select',
+            options: [
+                { label: 'Integrated with display/video bar', value: 'integrated' },
+                { label: 'On a shelf/mount above the display', value: 'above_display' },
+                { label: 'On a shelf/mount below the display', value: 'below_display' },
+                { label: 'On a dedicated wall mount', value: 'wall_mount' },
+                { label: 'On a ceiling mount', value: 'ceiling_mount' },
+                { label: 'On a Tripod (for mobile or temporary use)', value: 'tripod' },
+                { label: 'Custom mount (specify in "Other Requirements")', value: 'custom_mount' },
+                { label: 'Not applicable', value: 'na' },
+            ],
+        },
+        {
+            id: 'rackRequired',
+            text: 'Is an equipment rack required?',
+            type: 'select',
+            options: [
+                { label: 'Yes, a full-size floor-standing rack (42U)', value: '42u_rack' },
+                { label: 'Yes, a half-size floor-standing rack (24U)', value: '24u_rack' },
+                { label: 'Yes, a small credenza or wall-mount rack (12U)', value: '12u_rack' },
+                { label: 'No, equipment will be mounted behind display or in furniture', value: 'no_rack' },
+            ],
+        },
+    ]
+  },
+  {
+    title: '7. Lighting & Acoustics',
     questions: [
         {
           id: 'lightingControl',
@@ -320,7 +382,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '7. Additional Features',
+    title: '8. Additional Features',
     questions: [
         {
           id: 'roomScheduling',

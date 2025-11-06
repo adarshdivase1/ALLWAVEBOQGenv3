@@ -13,9 +13,11 @@ import Toast from './components/Toast';
 import BrandingModal from './components/BrandingModal';
 import PrintHeader from './components/PrintHeader';
 
-import { BoqItem, ClientDetails as ClientDetailsType, Room, Toast as ToastType, Theme, BrandingSettings } from './types';
+import { BoqItem, ClientDetails as ClientDetailsType, Room, Toast as ToastType, Theme, BrandingSettings, Currency } from './types';
 import { generateBoq, refineBoq, generateRoomVisualization, validateBoq } from './services/geminiService';
 import { exportToXlsx } from './utils/exportToXlsx';
+import { getExchangeRates } from './utils/currency';
+
 import SparklesIcon from './components/icons/SparklesIcon';
 import AuthGate from './components/AuthGate';
 import LoaderIcon from './components/icons/LoaderIcon';
@@ -69,6 +71,8 @@ const App: React.FC = () => {
     return (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
   });
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(defaultBranding);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
+  const [exchangeRates, setExchangeRates] = useState<Record<Currency, number> | null>(null);
 
   const activeRoom = rooms.find(room => room.id === activeRoomId);
 
@@ -82,6 +86,15 @@ const App: React.FC = () => {
     }
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // --- Fetch Exchange Rates ---
+  useEffect(() => {
+    const fetchRates = async () => {
+      const rates = await getExchangeRates();
+      setExchangeRates(rates);
+    };
+    fetchRates();
+  }, []);
 
   const canExport = rooms.some(r => r.boq && r.boq.length > 0);
 
@@ -106,7 +119,7 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [rooms, clientDetails, margin, brandingSettings, canExport]); 
+  }, [rooms, clientDetails, margin, brandingSettings, canExport, selectedCurrency]); 
 
   // --- Toast Timeout ---
   useEffect(() => {
@@ -347,7 +360,7 @@ const App: React.FC = () => {
       setIsExporting(true);
       setToast({ message: 'Generating Excel file...', type: 'success' });
       try {
-        await exportToXlsx(rooms, clientDetails, margin, brandingSettings);
+        await exportToXlsx(rooms, clientDetails, margin, brandingSettings, selectedCurrency);
         setToast({ message: 'BOQ exported successfully!', type: 'success' });
       } catch (error) {
         console.error("Export failed:", error);
@@ -367,6 +380,7 @@ const App: React.FC = () => {
         rooms,
         margin,
         brandingSettings,
+        selectedCurrency,
       };
       localStorage.setItem('genboq_project', JSON.stringify(projectState));
       setToast({ message: 'Project saved successfully!', type: 'success' });
@@ -387,6 +401,7 @@ const App: React.FC = () => {
             setRooms(savedState.rooms);
             setMargin(savedState.margin || 0);
             setBrandingSettings(savedState.brandingSettings || defaultBranding);
+            setSelectedCurrency(savedState.selectedCurrency || 'USD');
             setActiveRoomId(savedState.rooms.length > 0 ? savedState.rooms[0].id : null);
             setActiveTab('details');
             setToast({ message: 'Project loaded successfully!', type: 'success' });
@@ -540,6 +555,9 @@ const App: React.FC = () => {
                         visualizationImageUrl={activeRoom.visualizationImageUrl}
                         isValidating={activeRoom.isValidating}
                         validationResult={activeRoom.validationResult}
+                        selectedCurrency={selectedCurrency}
+                        onCurrencyChange={setSelectedCurrency}
+                        exchangeRates={exchangeRates}
                       />
                     </div>
                   ) : (

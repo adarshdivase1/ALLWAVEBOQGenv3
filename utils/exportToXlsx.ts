@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { ClientDetails, Room, BrandingSettings } from '../types';
+import { ClientDetails, Room, BrandingSettings, Currency, CURRENCIES } from '../types';
 import { companyTemplate } from '../data/scopeAndTermsData';
 import { getExchangeRates } from './currency';
 
@@ -12,6 +12,7 @@ export const exportToXlsx = async (
     clientDetails: ClientDetails,
     margin: number,
     branding: BrandingSettings,
+    selectedCurrency: Currency,
 ) => {
     const wb = XLSX.utils.book_new();
     const usedSheetNames = new Set<string>();
@@ -56,11 +57,13 @@ export const exportToXlsx = async (
         }
     };
 
+    const currencyInfo = CURRENCIES.find(c => c.value === selectedCurrency)!;
     const rates = await getExchangeRates();
-    const inrRate = rates['INR'] || 83.5;
+    const rate = rates[selectedCurrency] || 1;
     const gstRate = 0.18;
     const sgstRate = gstRate / 2;
     const cgstRate = gstRate / 2;
+    const isINR = selectedCurrency === 'INR';
     
     // --- Cover Page Sheet (Dynamically built) ---
     const coverWsData = [];
@@ -125,7 +128,7 @@ export const exportToXlsx = async (
 
     // --- Proposal Summary Sheet ---
     const summaryWs = XLSX.utils.aoa_to_sheet([[]]);
-    const summaryHeader = ['Sr. No', 'Description', 'Total (INR)'];
+    const summaryHeader = ['Sr. No', 'Description', `Total (${currencyInfo.value})`];
     summaryWs['!rows'] = [{ hpt: 25 }];
     summaryHeader.forEach((val, i) => summaryWs[XLSX.utils.encode_cell({c: i, r: 0})] = { v: val, s: headerStyle });
     
@@ -138,7 +141,7 @@ export const exportToXlsx = async (
             room.boq.forEach(item => {
                 const itemMarginPercent = typeof item.margin === 'number' ? item.margin : margin;
                 const itemMarginMultiplier = 1 + itemMarginPercent / 100;
-                roomTotalAfterMargin += (item.totalPrice * inrRate) * itemMarginMultiplier;
+                roomTotalAfterMargin += (item.totalPrice * rate) * itemMarginMultiplier;
             });
             const roomFinalTotal = roomTotalAfterMargin * (1 + gstRate);
             projectGrandTotal += roomFinalTotal;
@@ -175,43 +178,73 @@ export const exportToXlsx = async (
     for (const room of rooms) {
         if (room.boq) {
             const roomWs = XLSX.utils.aoa_to_sheet([]);
-            const roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', 'Unit Rate (INR)', 'Total (INR)', 'Margin (%)', 'Total after Margin (INR)', 'SGST 9% (INR)', 'CGST 9% (INR)', 'Total with Tax (INR)'];
+            let roomHeader: string[];
+
+            if (isINR) {
+                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', 'Unit Rate (INR)', 'Total (INR)', 'Margin (%)', 'Total after Margin (INR)', 'SGST 9% (INR)', 'CGST 9% (INR)', 'Total with Tax (INR)'];
+            } else {
+                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', `Unit Rate (${currencyInfo.value})`, `Total (${currencyInfo.value})`, 'Margin (%)', `Total after Margin (${currencyInfo.value})`, `Tax (18%) (${currencyInfo.value})`, `Total with Tax (${currencyInfo.value})`];
+            }
+
             roomWs['!rows'] = [{ hpt: 25 }];
             roomHeader.forEach((val, i) => roomWs[XLSX.utils.encode_cell({c: i, r: 0})] = { v: val, s: headerStyle });
             
-            let roomSubTotal = 0, roomTotalAfterMargin = 0, roomSgstTotal = 0, roomCgstTotal = 0, roomGrandTotal = 0;
+            let roomSubTotal = 0, roomTotalAfterMargin = 0, roomSgstTotal = 0, roomCgstTotal = 0, roomTaxTotal = 0, roomGrandTotal = 0;
 
             room.boq.forEach((item, index) => {
-                const unitPriceInr = item.unitPrice * inrRate;
-                const totalPriceInr = item.totalPrice * inrRate;
+                const unitPriceConverted = item.unitPrice * rate;
+                const totalPriceConverted = item.totalPrice * rate;
                 const currentItemMarginPercent = typeof item.margin === 'number' ? item.margin : margin;
                 const marginMultiplier = 1 + currentItemMarginPercent / 100;
-                const totalPriceWithMargin = totalPriceInr * marginMultiplier;
-                const sgstAmount = totalPriceWithMargin * sgstRate;
-                const cgstAmount = totalPriceWithMargin * cgstRate;
-                const finalTotalPrice = totalPriceWithMargin + sgstAmount + cgstAmount;
+                const totalPriceWithMargin = totalPriceConverted * marginMultiplier;
+                
+                let rowData: any[];
 
-                roomSubTotal += totalPriceInr;
+                if (isINR) {
+                    const sgstAmount = totalPriceWithMargin * sgstRate;
+                    const cgstAmount = totalPriceWithMargin * cgstRate;
+                    const finalTotalPrice = totalPriceWithMargin + sgstAmount + cgstAmount;
+                    roomSgstTotal += sgstAmount;
+                    roomCgstTotal += cgstAmount;
+                     rowData = [ index + 1, item.itemDescription, item.model, item.brand, item.quantity, unitPriceConverted, totalPriceConverted, currentItemMarginPercent, totalPriceWithMargin, sgstAmount, cgstAmount, finalTotalPrice ];
+                } else {
+                    const taxAmount = totalPriceWithMargin * gstRate;
+                    const finalTotalPrice = totalPriceWithMargin + taxAmount;
+                    roomTaxTotal += taxAmount;
+                    rowData = [ index + 1, item.itemDescription, item.model, item.brand, item.quantity, unitPriceConverted, totalPriceConverted, currentItemMarginPercent, totalPriceWithMargin, taxAmount, finalTotalPrice ];
+                }
+
+                roomSubTotal += totalPriceConverted;
                 roomTotalAfterMargin += totalPriceWithMargin;
-                roomSgstTotal += sgstAmount;
-                roomCgstTotal += cgstAmount;
-                roomGrandTotal += finalTotalPrice;
+                roomGrandTotal += rowData[rowData.length - 1]; // Total with tax is always the last item
 
-                XLSX.utils.sheet_add_aoa(roomWs, [[ index + 1, item.itemDescription, item.model, item.brand, item.quantity, unitPriceInr, totalPriceInr, currentItemMarginPercent, totalPriceWithMargin, sgstAmount, cgstAmount, finalTotalPrice]], { origin: `A${index + 2}` });
+                XLSX.utils.sheet_add_aoa(roomWs, [rowData], { origin: `A${index + 2}` });
             });
             
             const totalRowStart = room.boq.length + 3;
-            [
+            const totalsOriginCol = isINR ? 'K' : 'J';
+            let totalRows: [string, number][] = [
                 ['Subtotal:', roomSubTotal],
                 ['Total after Margin:', roomTotalAfterMargin],
-                ['Total SGST (9%):', roomSgstTotal],
-                ['Total CGST (9%):', roomCgstTotal],
-                ['Grand Total:', roomGrandTotal]
-            ].forEach((data, i) => {
-                    XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(data[0], totalStyle), createStyledCell(data[1], totalStyle, 'n')]], { origin: `H${totalRowStart + i}`});
+            ];
+
+            if (isINR) {
+                totalRows.push(['Total SGST (9%):', roomSgstTotal], ['Total CGST (9%):', roomCgstTotal]);
+            } else {
+                totalRows.push(['Total Tax (18%):', roomTaxTotal]);
+            }
+            totalRows.push(['Grand Total:', roomGrandTotal]);
+
+            totalRows.forEach((data, i) => {
+                XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(data[0], totalStyle), createStyledCell(data[1], totalStyle, 'n')]], { origin: `${totalsOriginCol}${totalRowStart + i}`});
             });
 
-            roomWs['!cols'] = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
+            if (isINR) {
+                roomWs['!cols'] = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
+            } else {
+                 roomWs['!cols'] = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 20 }];
+            }
+            
             XLSX.utils.book_append_sheet(wb, roomWs, getUniqueSheetName(room.name));
         }
     }

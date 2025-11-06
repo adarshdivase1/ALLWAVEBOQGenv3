@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import type { Boq, BoqItem, ProductDetails, Room, ValidationResult } from '../types';
+import type { Boq, BoqItem, ProductDetails, Room, ValidationResult, GroundingSource } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable is not set");
@@ -12,24 +12,65 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const generateBoq = async (requirements: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `Based on the following requirements for an AV room, generate a comprehensive Bill of Quantities (BOQ). This must include all necessary AV equipment, accessories, AND critical environmental components like lighting and acoustic treatment where applicable.
-    
-    Requirements: "${requirements}"
+    const prompt = `You are a world-class, certified AV System Designer following AVIXA standards. Your task is to generate a comprehensive and **100% production-ready** Bill of Quantities (BOQ) based on the following requirements. The resulting design MUST be technically flawless, cohesive, and ready for immediate proposal to a client.
 
-    Your analysis MUST consider the room type, dimensions, and intended use to determine the necessity for:
-    1.  **Acoustic Treatment:** If the room is large, has hard surfaces, is described as echoey, or is intended for high-quality audio (e.g., boardrooms, auditoriums, town halls), you MUST include line items for acoustic treatment (e.g., acoustic panels, diffusers, bass traps). Specify quantities based on a reasonable estimation for the room size.
-    2.  **Lighting:** If the requirements mention presentations, video conferencing, or stages, you MUST include appropriate lighting fixtures (e.g., spotlights for a presenter, dimmable architectural lighting) and the necessary control systems (e.g., DMX controllers, integration components for the main control system).
+    **Client Requirements:** "${requirements}"
 
-    The BOQ should be an array of objects, where each object represents a line item and has the following properties:
-    - category: string (e.g., "Display", "Audio", "Acoustic Treatment", "Lighting & Control", "Cabling & Infrastructure")
-    - itemDescription: string (A clear and concise description of the item)
-    - brand: string (A well-known, reputable brand for the item)
-    - model: string (A specific, valid model number for the item)
-    - quantity: number (The number of units required)
-    - unitPrice: number (A realistic estimated unit price in USD, without currency symbols or commas)
-    - totalPrice: number (Calculated as quantity * unitPrice)
+    **CRITICAL DESIGN INSTRUCTIONS:**
 
-    Ensure the list is complete and covers all necessary components for a functional system based on the requirements. Include all necessary accessories, mounts, cables, and connectors.
+    1.  **CATEGORY & ITEM ORDERING (NON-NEGOTIABLE):**
+        *   You MUST structure the entire BOQ in the following strict category order. Do not deviate.
+            1.  Display
+            2.  Video Conferencing & Cameras
+            3.  Video Distribution & Switching
+            4.  Audio - Microphones
+            5.  Audio - DSP & Amplification
+            6.  Audio - Speakers
+            7.  Control System
+            8.  Cabling & Infrastructure
+            9.  Mounts & Racks
+            10. Accessories
+        *   Group all related items under their correct category. For example, all display mounts go under "Mounts & Racks".
+
+    2.  **CORE SYSTEM ARCHITECTURE & ECOSYSTEM INTEGRITY (NON-NEGOTIABLE):**
+        *   **Choose ONE Ecosystem:** You must select a single, unified ecosystem for the core of the system (Control, Audio DSP, and Video Distribution). DO NOT mix and match core components from competing ecosystems.
+        *   **Strict Adherence:** If the user's brand preferences point to a specific ecosystem (e.g., "vcBrands: Yealink"), you MUST build the solution around that ecosystem.
+        *   **Avoid Redundancy and Conflicts:** Do not include duplicative or conflicting functionality. For instance, if a Yealink video conferencing kit includes a WPP30 for wireless presentation, you MUST NOT also add a Crestron AirMedia or Barco ClickShare. The system must be lean and logical.
+        *   **Example Scenarios:**
+            *   If you choose **Crestron** for control (e.g., CP4), you MUST use Crestron for AV-over-IP (e.g., DM-NVX) and compatible DSPs.
+            *   If you choose **Q-SYS** for audio and control (e.g., Core Nano), you MUST use Q-SYS for video (e.g., NV-Series) and Q-SYS peripherals.
+        *   **This is the most important rule. A design with conflicting core components is an automatic failure.**
+
+    3.  **MODEL & VERSIONING:**
+        *   You MUST specify current-generation, commercially available products. Do not use legacy or end-of-life models.
+        *   For example, when specifying Crestron AV-over-IP, you MUST use current models like the **DM-NVX-360** or **DM-NVX-363 series**. Do not use older models.
+
+    4.  **BRAND PREFERENCE ADHERENCE:**
+        *   The user's requirements may specify preferred brands (e.g., "vcBrands: Cisco, Poly"). You MUST prioritize products from these brands.
+        *   Only if a suitable product from the preferred brand list does not exist for a specific function may you select a product from another reputable, compatible brand.
+
+    5.  **NETWORKING INFRASTRUCTURE:**
+        *   For any system utilizing AV over IP (e.g., DM-NVX, Q-SYS NV-Series, Dante), you MUST specify a managed network switch suitable for AV traffic.
+        *   You MUST provide a specific brand and model (e.g., "Cisco SG350", "Netgear M4250").
+        *   **DO NOT use generic terms like "Network Switch".** This is a critical component.
+
+    6.  **AVIXA STANDARDS COMPLIANCE:**
+        *   The entire system design, including signal flow, power management, grounding, and component choice, must strictly adhere to AVIXA standards for performance, reliability, and interoperability.
+        *   Include all necessary accessories: mounts, cables, connectors, power distribution units (PDUs), and rack shelves.
+
+    7.  **Acoustic & Lighting Treatment:**
+        *   If the room type is an Auditorium, Town Hall, Boardroom, or is described as having poor acoustics, you MUST include specific line items for acoustic treatment (e.g., "Artnovion Acoustic Panels").
+        *   If video conferencing or presentations are key functions, you MUST include appropriate lighting (e.g., "Lutron lighting control system," "specialized presenter spotlights").
+
+    **OUTPUT FORMAT:**
+    Return a JSON array of objects with the following properties:
+    - category: string (Must be one of the categories listed in Instruction #1)
+    - itemDescription: string
+    - brand: string
+    - model: string
+    - quantity: number
+    - unitPrice: number (realistic estimated price in USD, numbers only)
+    - totalPrice: number (quantity * unitPrice)
     `;
 
     const responseSchema = {
@@ -60,10 +101,33 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
         });
 
         const jsonText = response.text.trim();
-        const boq = JSON.parse(jsonText);
+        const boq: BoqItem[] = JSON.parse(jsonText);
         
+        // Define the desired category order for sorting
+        const categoryOrder = [
+            "Display",
+            "Video Conferencing & Cameras",
+            "Video Distribution & Switching",
+            "Audio - Microphones",
+            "Audio - DSP & Amplification",
+            "Audio - Speakers",
+            "Control System",
+            "Cabling & Infrastructure",
+            "Mounts & Racks",
+            "Accessories",
+        ];
+
+        // Sort the BOQ according to the defined order
+        const sortedBoq = boq.sort((a, b) => {
+            const indexA = categoryOrder.indexOf(a.category);
+            const indexB = categoryOrder.indexOf(b.category);
+            const effectiveIndexA = indexA === -1 ? Infinity : indexA;
+            const effectiveIndexB = indexB === -1 ? Infinity : indexB;
+            return effectiveIndexA - effectiveIndexB;
+        });
+
         // Post-processing to ensure totalPrice is correct
-        return boq.map((item: BoqItem) => ({
+        return sortedBoq.map((item: BoqItem) => ({
             ...item,
             totalPrice: item.quantity * item.unitPrice
         }));
@@ -79,7 +143,7 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
  */
 export const refineBoq = async (currentBoq: Boq, refinementPrompt: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `Refine the following Bill of Quantities (BOQ) based on the user's request.
+    const prompt = `Refine the following Bill of Quantities (BOQ) based on the user's request, ensuring the final design remains technically sound and cohesive.
 
     Current BOQ (in JSON format):
     ${JSON.stringify(currentBoq, null, 2)}
@@ -87,11 +151,11 @@ export const refineBoq = async (currentBoq: Boq, refinementPrompt: string): Prom
     User's Refinement Request: "${refinementPrompt}"
 
     Instructions:
-    1. Carefully analyze the user's request and modify the BOQ accordingly.
-    2. The request might be to add, remove, update items, change brands, adjust quantities, etc.
-    3. Return the *complete, updated BOQ* as a single JSON array. 
-    4. Ensure the output format is identical to the input BOQ format (an array of objects with the same properties).
-    5. Recalculate 'totalPrice' for any items where 'quantity' or 'unitPrice' is changed.
+    1.  Analyze the user's request and modify the BOQ. This could involve adding, removing, or updating items.
+    2.  **CRITICAL:** When adding or changing items, you MUST maintain the integrity of the core system architecture. Do not introduce components that conflict with the established control or distribution ecosystem.
+    3.  Prioritize the latest available models from reputable OEMs and maintain AVIXA standards.
+    4.  Recalculate 'totalPrice' for any items where 'quantity' or 'unitPrice' is changed.
+    5.  Return the *complete, updated BOQ* as a single JSON array, identical in format to the input.
     
     CRITICAL: The final output must only be the JSON array for the refined BOQ. Do not include any other text, explanations, or markdown formatting.
     `;
@@ -198,8 +262,7 @@ export const generateRoomVisualization = async (answers: Record<string, any>, bo
  */
 export const validateBoq = async (boq: Boq, requirements: string): Promise<ValidationResult> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `You are an expert AV system design auditor. Analyze the provided Bill of Quantities (BOQ) against the user's requirements. 
-    Your goal is to identify potential issues, missing components, incompatibilities, or areas for improvement.
+    const prompt = `You are an expert AV system design auditor. Analyze the provided Bill of Quantities (BOQ) against the user's requirements with extreme scrutiny. Your primary goal is to identify critical design flaws.
 
     User Requirements: "${requirements}"
 
@@ -207,17 +270,17 @@ export const validateBoq = async (boq: Boq, requirements: string): Promise<Valid
     ${JSON.stringify(boq, null, 2)}
 
     Perform the following analysis:
-    1.  **Completeness Check:** Are there any crucial AV components missing for a fully functional system? (e.g., mounts for displays, correct cables, power distribution units, a control processor if a touch panel is listed, etc.).
-    2.  **Environmental Check (CRITICAL):** Based on the room type (e.g., Auditorium, Town Hall, Boardroom, large conference room) and the requirements, have **acoustic treatment** and **specialized lighting** been considered? If they appear to be missing from the BOQ but should be present, list them under 'missingComponents' and add a warning. It is critical that large or acoustically challenging spaces have these elements for a successful project.
-    3.  **Compatibility Check:** Are the chosen components generally compatible? (e.g., a Cisco video conferencing codec with a non-certified camera). Flag potential mismatches.
-    4.  **Best Practices:** Does the BOQ align with AV industry best practices for the given room type?
-    5.  **Requirement Mismatch:** Does any part of the BOQ contradict the user's stated requirements?
+    1.  **Ecosystem Conflict Check (HIGHEST PRIORITY):** Does the BOQ mix core control, audio, and video components from competing ecosystems (e.g., a Crestron control processor with Q-SYS video distribution, or an Extron controller with AMX touch panels)? This is a critical design failure. Flag any such conflicts as a major warning.
+    2.  **Completeness Check:** Are there any crucial components missing for a fully functional system? (e.g., mounts for displays, a managed network switch for an AV-over-IP system, power distribution units, a control processor if a touch panel is listed).
+    3.  **Networking Check:** If AV-over-IP components are listed, is a specific, brand-name managed network switch also listed? A 'generic' switch is a failure.
+    4.  **Environmental Check:** Based on the room type (e.g., Auditorium, Town Hall, Boardroom), have **acoustic treatment** and **specialized lighting** been considered? If they appear to be missing but should be present, list them under 'missingComponents' and add a warning.
+    5.  **Compatibility Check:** Are there any less obvious component incompatibilities? Flag any potential mismatches.
 
-    Provide your findings in a structured JSON format with the following keys:
-    - isValid: boolean (true if there are no major issues, false otherwise. Be strict - if there are any warnings or missing components, this should be false).
-    - warnings: string[] (A list of potential issues, incompatibilities, or deviations from best practices).
-    - suggestions: string[] (A list of recommendations for improvement, like alternative products or additions that would enhance the system).
-    - missingComponents: string[] (A list of specific components you believe are missing).
+    Provide your findings in a structured JSON format. Be strict: if there are any warnings or missing components, 'isValid' MUST be false.
+    - isValid: boolean
+    - warnings: string[] (List of critical design flaws and incompatibilities).
+    - suggestions: string[] (Recommendations for improvement).
+    - missingComponents: string[] (Specific components you believe are missing).
     `;
 
     const responseSchema = {
@@ -292,9 +355,10 @@ export const fetchProductDetails = async (productName: string): Promise<ProductD
         }
 
         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-        const sources = groundingChunks
-            ?.map(chunk => chunk.web)
-            .filter((web): web is { uri: string, title: string } => web !== undefined && web !== null) || [];
+        // Correctly filter the grounding chunks to preserve the { web: { ... } } structure.
+        const sources: GroundingSource[] = groundingChunks
+            ?.filter((chunk): chunk is { web: { uri: string; title: string } } => !!chunk.web)
+            .map(chunk => ({ web: chunk.web! })) || [];
 
         return {
             description,
