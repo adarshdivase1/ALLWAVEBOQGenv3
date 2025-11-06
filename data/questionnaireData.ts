@@ -110,13 +110,21 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
-        id: 'vcPlatform',
-        text: 'What is the primary video conferencing platform?',
+        id: 'vcArchitecture',
+        text: 'What is the preferred system architecture?',
         type: 'select',
+        options: [
+          { label: 'All-in-One Solution (e.g., Video Bar with integrated camera, mics, speakers)', value: 'all_in_one' },
+          { label: 'Component-Based System (Separate camera, mics, DSP, etc. for best performance)', value: 'component_based' },
+        ],
+      },
+      {
+        id: 'vcPlatform',
+        text: 'What video conferencing platforms will be used?',
+        type: 'multiple-choice',
         options: [
           { label: 'Bring Your Own Device (BYOD) - Users connect laptops', value: 'byod' },
           { label: 'Dedicated Room System (e.g., Microsoft Teams Room, Zoom Room)', value: 'dedicated_room_system' },
-          { label: 'Not Sure / Both', value: 'flexible_vc' },
         ],
       },
       {
@@ -182,6 +190,7 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Dali', value: 'Dali' },
             { label: 'Studio Master', value: 'Studio Master' },
             { label: 'Logic', value: 'Logic' },
+            { label: 'Gigatronics', value: 'Gigatronics' },
         ]
       },
       {
@@ -262,6 +271,7 @@ export const questionnaire: QuestionnaireSection[] = [
           { label: 'Panduit', value: 'Panduit' },
           { label: 'Liberty', value: 'Liberty' },
           { label: 'Brightsign', value: 'Brightsign' },
+          { label: 'Gigatronics', value: 'Gigatronics' },
         ]
       },
       {
@@ -310,6 +320,7 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Panduit', value: 'Panduit' },
             { label: 'Rittal', value: 'Rittal' },
             { label: 'APC', value: 'APC' },
+            { label: 'Gigatronics', value: 'Gigatronics' },
           ]
         },
         {

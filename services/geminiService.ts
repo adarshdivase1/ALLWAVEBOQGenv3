@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from '@google/genai';
 import type { Boq, BoqItem, ProductDetails, Room, ValidationResult, GroundingSource } from '../types';
 
@@ -36,6 +37,9 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
         *   **Choose ONE Ecosystem:** You must select a single, unified ecosystem for the core of the system (Control, Audio DSP, and Video Distribution). DO NOT mix and match core components from competing ecosystems.
         *   **Strict Adherence:** If the user's brand preferences point to a specific ecosystem (e.g., "vcBrands: Yealink"), you MUST build the solution around that ecosystem.
         *   **Avoid Redundancy and Conflicts:** Do not include duplicative or conflicting functionality. For instance, if a Yealink video conferencing kit includes a WPP30 for wireless presentation, you MUST NOT also add a Crestron AirMedia or Barco ClickShare. The system must be lean and logical.
+        *   **System Architecture Preference:** The user may specify a preference for system architecture via the \`vcArchitecture\` parameter.
+            *   If \`'vcArchitecture: all_in_one'\` is specified, you MUST prioritize an all-in-one video bar solution (e.g., Yealink A20/A30, Poly Studio X-series, Logitech Rally Bar). These devices integrate the camera, microphones, and speakers. The rest of the design should complement this choice.
+            *   If \`'vcArchitecture: component_based'\` is specified, or if the parameter is not present, you MUST design a system using discrete, high-performance components (e.g., a separate PTZ camera, ceiling or tabletop microphones, a dedicated DSP, and separate speakers). This approach is preferred for larger or more complex rooms.
         *   **Example Scenarios:**
             *   If you choose **Crestron** for control (e.g., CP4), you MUST use Crestron for AV-over-IP (e.g., DM-NVX) and compatible DSPs.
             *   If you choose **Q-SYS** for audio and control (e.g., Core Nano), you MUST use Q-SYS for video (e.g., NV-Series) and Q-SYS peripherals.
@@ -49,17 +53,28 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
     4.  **BRAND PREFERENCE ADHERENCE:**
         *   The user's requirements may specify preferred brands (e.g., "vcBrands: Cisco, Poly"). You MUST prioritize products from these brands.
         *   Only if a suitable product from the preferred brand list does not exist for a specific function may you select a product from another reputable, compatible brand.
+    
+    5.  **BRAND-SPECIFIC PRODUCT GUIDANCE:**
+        *   **Gigatronics (India):** If 'Gigatronics' is selected as a preferred brand, you should prioritize their products for the following categories:
+            *   **Connectivity & Infrastructure:** This is their core strength. Specify Gigatronics for cables (HDMI, USB, CAT6), connectors, wall plates, floor boxes, and table pop-up boxes.
+            *   **Signal Management:** Use Gigatronics for HDMI splitters, switchers, extenders (HDBaseT/wireless), and converters.
+            *   **Mounts & Racks:** Specify Gigatronics for AV racks and display mounts.
+            *   **Audio:** Gigatronics offers a range of audio equipment including amplifiers, microphones, and speakers suitable for standard commercial installations.
+        *   **Note:** Gigatronics India is distinct from the US Giga-tronics. Focus on their commercial AV product line.
 
-    5.  **NETWORKING INFRASTRUCTURE:**
+    6.  **COMPONENT SELECTION CRITERIA (NON-NEGOTIABLE):**
+        *   **Commercial vs. Consumer Displays:** All displays MUST be professional/commercial grade. You MUST specify commercial signage displays (e.g., Samsung QMC series, LG UR series, Sony BZ series). **You are strictly forbidden from specifying consumer televisions (e.g., Samsung QLED TVs, LG OLED TVs).** Commercial displays are designed for longevity (e.g., 16/7 or 24/7 operation), extended warranties, and robust control system integration (RS-232, IP Control), which are critical in a professional AV environment.
+
+    7.  **NETWORKING INFRASTRUCTURE:**
         *   For any system utilizing AV over IP (e.g., DM-NVX, Q-SYS NV-Series, Dante), you MUST specify a managed network switch suitable for AV traffic.
         *   You MUST provide a specific brand and model (e.g., "Cisco SG350", "Netgear M4250").
         *   **DO NOT use generic terms like "Network Switch".** This is a critical component.
 
-    6.  **AVIXA STANDARDS COMPLIANCE:**
+    8.  **AVIXA STANDARDS COMPLIANCE:**
         *   The entire system design, including signal flow, power management, grounding, and component choice, must strictly adhere to AVIXA standards for performance, reliability, and interoperability.
         *   Include all necessary accessories: mounts, cables, connectors, power distribution units (PDUs), and rack shelves.
 
-    7.  **Acoustic & Lighting Treatment:**
+    9.  **Acoustic & Lighting Treatment:**
         *   If the room type is an Auditorium, Town Hall, Boardroom, or is described as having poor acoustics, you MUST include specific line items for acoustic treatment (e.g., "Artnovion Acoustic Panels").
         *   If video conferencing or presentations are key functions, you MUST include appropriate lighting (e.g., "Lutron lighting control system," "specialized presenter spotlights").
 
