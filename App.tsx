@@ -14,7 +14,7 @@ import BrandingModal from './components/BrandingModal';
 import PrintHeader from './components/PrintHeader';
 
 import { BoqItem, ClientDetails as ClientDetailsType, Room, Toast as ToastType, Theme, BrandingSettings, Currency } from './types';
-import { generateBoq, refineBoq, generateRoomVisualization, validateBoq } from './services/geminiService';
+import { generateBoq, refineBoq, generateRoomVisualization, validateBoq, generateRoomSchematic } from './services/geminiService';
 import { exportToXlsx } from './utils/exportToXlsx';
 import { getExchangeRates } from './utils/currency';
 
@@ -145,6 +145,9 @@ const App: React.FC = () => {
       visualizationError: null,
       isValidating: false,
       validationResult: null,
+      isGeneratingSchematic: false,
+      schematicImageUrl: null,
+      schematicError: null,
     };
     setRooms([...rooms, newRoom]);
     setActiveRoomId(newRoomId);
@@ -162,6 +165,9 @@ const App: React.FC = () => {
     newRoom.name = `${roomToDuplicate.name} (Copy)`;
     newRoom.isValidating = false;
     newRoom.validationResult = null; // Reset validation on copy
+    newRoom.isGeneratingSchematic = false;
+    newRoom.schematicImageUrl = null;
+    newRoom.schematicError = null;
     
     const originalRoomIndex = rooms.findIndex(room => room.id === id);
 
@@ -298,6 +304,30 @@ const App: React.FC = () => {
     setRooms(prevRooms =>
       prevRooms.map(room =>
         room.id === activeRoomId ? { ...room, visualizationImageUrl: null, visualizationError: null } : room
+      )
+    );
+  };
+
+  const handleGenerateSchematic = async () => {
+    if (!activeRoom || !activeRoom.boq) return;
+
+    setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, isGeneratingSchematic: true, schematicError: null, schematicImageUrl: null } : r));
+
+    try {
+      const imageUrl = await generateRoomSchematic(activeRoom.answers, activeRoom.boq);
+      setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, schematicImageUrl: imageUrl, isGeneratingSchematic: false } : r));
+    } catch (error) {
+      console.error('Failed to generate schematic:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      setRooms(rooms.map(r => r.id === activeRoomId ? { ...r, isGeneratingSchematic: false, schematicError: `Failed to generate schematic: ${errorMessage}` } : r));
+    }
+  };
+
+  const handleClearSchematic = () => {
+    if (!activeRoomId) return;
+    setRooms(prevRooms =>
+      prevRooms.map(room =>
+        room.id === activeRoomId ? { ...room, schematicImageUrl: null, schematicError: null } : room
       )
     );
   };
@@ -555,6 +585,11 @@ const App: React.FC = () => {
                         visualizationImageUrl={activeRoom.visualizationImageUrl}
                         isValidating={activeRoom.isValidating}
                         validationResult={activeRoom.validationResult}
+                        onGenerateSchematic={handleGenerateSchematic}
+                        onClearSchematic={handleClearSchematic}
+                        isGeneratingSchematic={activeRoom.isGeneratingSchematic}
+                        schematicError={activeRoom.schematicError}
+                        schematicImageUrl={activeRoom.schematicImageUrl}
                         selectedCurrency={selectedCurrency}
                         onCurrencyChange={setSelectedCurrency}
                         exchangeRates={exchangeRates}

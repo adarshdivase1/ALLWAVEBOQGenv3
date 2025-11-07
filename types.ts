@@ -86,6 +86,9 @@ export interface Room {
     visualizationError: string | null;
     isValidating: boolean;
     validationResult: ValidationResult | null;
+    isGeneratingSchematic: boolean;
+    schematicImageUrl: string | null;
+    schematicError: string | null;
 }
 
 export interface RoomTemplate {

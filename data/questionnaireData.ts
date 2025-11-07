@@ -280,6 +280,8 @@ export const questionnaire: QuestionnaireSection[] = [
         text: 'Any preferred connectivity or infrastructure brands?',
         type: 'multiple-choice',
         options: [
+          { label: 'Crestron', value: 'Crestron' },
+          { label: 'Extron', value: 'Extron' },
           { label: 'Lightware', value: 'Lightware' },
           { label: 'Kramer', value: 'Kramer' },
           { label: 'ATEN', value: 'ATEN' },

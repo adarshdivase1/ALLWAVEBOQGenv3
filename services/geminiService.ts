@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from '@google/genai';
 import type { Boq, BoqItem, ProductDetails, Room, ValidationResult, GroundingSource } from '../types';
 
@@ -13,38 +14,49 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const generateBoq = async (requirements: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `As an expert AV System Designer adhering to AVIXA standards, create a technically flawless, production-ready Bill of Quantities (BOQ) from the user's requirements.
+    const prompt = `You are a world-class, senior AV Systems Designer. Your task is to create a 100% technically flawless, logical, and production-ready Bill of Quantities (BOQ) based on the client's detailed requirements. You must adhere strictly to all AVIXA standards and the rules below.
 
-**Client Requirements:** "${requirements}"
+**Client Requirements (from questionnaire):** "${requirements}"
 
 **MANDATORY DESIGN RULES:**
 
-1.  **BOQ Structure:**
-    *   You MUST use and order these categories exactly as listed: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System, 8. Cabling & Infrastructure, 9. Mounts & Racks, 10. Accessories.
+1.  **Core Design Principles:**
+    *   **Production-Ready:** Every item must be essential. The final BOQ must represent a complete, installable system with no missing parts.
+    *   **Logical Cohesion:** The system must be designed as a single, unified ecosystem. Core components for control, audio DSP, and video distribution must be from the same brand family (e.g., Crestron control with Crestron switching; Q-SYS DSP with Q-SYS cameras). Do not mix competing core ecosystems. This is a critical failure condition.
+    *   **No Redundancy:** Avoid duplicative functionality. If a Yealink VC kit includes wireless presentation, DO NOT add a separate Barco ClickShare.
+    *   **Current Products:** Specify only current-generation, commercially available products. Do not use end-of-life, outdated, or consumer-grade models. All displays MUST be professional/commercial grade.
+
+2.  **Sizing & Coverage (Based on Room Dimensions & Capacity):**
+    *   **Display Sizing (AVIXA 4:6:8 Rule):** Calculate the minimum required display height based on the room length. Assume the furthest viewer is at the back of the room.
+        *   For Boardrooms, NOCs, or Experience Centers, use the "Critical Viewing" rule (furthest viewer <= 4x image height).
+        *   For all other rooms, use the "Detailed Viewing" rule (furthest viewer <= 6x image height).
+        *   Select a standard commercial display size (e.g., 55", 65", 75", 86", 98") that meets or exceeds this calculated height.
+    *   **Audio Coverage:** The goal is even sound pressure level (SPL) and high speech intelligibility across the entire seating area.
+        *   For rooms longer than 15 feet or with more than 8 people, you MUST specify a sufficient number of ceiling speakers to achieve this. Calculate the number based on room dimensions and typical speaker dispersion.
+        *   An all-in-one video bar is only an acceptable audio solution for Huddle Rooms or small conference rooms (under 15 feet long).
+    *   **Microphone Coverage:** Ensure complete audio capture for all participants. For any room with a capacity over 6, ceiling or tabletop microphones are mandatory. The number and placement must be appropriate for the \`tableShape\` and room size.
+    *   **Camera Field of View (FOV):** The selected camera(s) MUST be able to capture all participants. For long rooms, prioritize a camera with strong optical zoom (PTZ). For wide rooms or U-shaped tables, prioritize a camera with a wide FOV (90 degrees or more) and auto-framing capabilities.
+
+3.  **Specific User Requirements:**
+    *   **Architecture Preference:** If \`vcArchitecture: all_in_one\` is specified, you MUST design around an all-in-one video bar. If \`vcArchitecture: component_based\` is specified (or absent), you MUST use a discrete component system.
+    *   **Matrix Switcher:** If \`matrixSwitcherRequired: yes\` is specified, you MUST include a dedicated matrix switcher. This overrides any simpler switching solutions other components might offer.
+    *   **Brand Adherence:** Strictly prioritize brands specified in the user's requirements (e.g., \`displayBrands\`, \`vcBrands\`, \`controlBrands\`). If \`Gigatronics (India)\` is selected, use them for cabling, mounts, and accessories where appropriate.
+
+4.  **Completeness & Ancillaries:**
+    *   You MUST include every necessary accessory for a complete installation. This includes:
+        *   A specific, named, managed network switch (e.g., "Cisco SG350", "Netgear AV Line M4250") for ANY system using AV-over-IP components.
+        *   The correct wall or ceiling mount for every display and camera.
+        *   A rack-mount power distribution unit (PDU) and blank panels for any equipment rack.
+        *   All required cables (HDMI, USB, Cat6, speaker wire), connectors, and wall plates. The quantity and length must be logical for the room size.
+    *   If the room type is an Auditorium, Town Hall, Boardroom, or \`acousticNeeds\` is 'poor', you MUST include a line item for acoustic treatment.
+
+5.  **BOQ Structure & Formatting:**
+    *   You MUST use and order these categories exactly: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System, 8. Cabling & Infrastructure, 9. Mounts & Racks, 10. Accessories.
     *   Group all items correctly under their respective categories.
-
-2.  **System Ecosystem & Logic:**
-    *   **Unified Ecosystem:** Select ONE single, unified ecosystem for core components (Control, Audio DSP, Video Distribution). DO NOT mix core brands (e.g., a Crestron processor with Q-SYS video). This is a critical rule.
-    *   **No Redundancy:** Avoid duplicative functionality. For instance, if a Yealink VC kit includes a WPP30 for wireless presentation, you MUST NOT add a separate Barco ClickShare.
-    *   **Architecture Preference:** If the user specifies \`vcArchitecture: all_in_one\`, you MUST design around an all-in-one video bar. If \`vcArchitecture: component_based\` is specified (or if it's absent), you MUST use a discrete component system (separate camera, mics, DSP, etc.).
-    *   **Matrix Switcher:** If the requirements state \`matrixSwitcherRequired: yes\`, you MUST include a dedicated matrix switcher from the chosen ecosystem. This user requirement is absolute and overrides any simpler switching solutions other components might offer.
-
-3.  **Product Selection:**
-    *   Specify only current-generation, commercially available products. Do not use end-of-life models.
-    *   **Commercial Displays ONLY:** All displays MUST be professional/commercial grade (e.g., Samsung QMC series, LG UR series). You are strictly forbidden from using consumer televisions.
-
-4.  **Brand Adherence:**
-    *   Strictly prioritize brands specified in the user's requirements.
-    *   **Gigatronics (India):** If selected, prioritize their products for: Connectivity & Infrastructure (cables, plates, boxes), Signal Management (splitters, extenders), Mounts & Racks, and standard audio components.
-
-5.  **Completeness & Standards:**
-    *   For any AV-over-IP system, you MUST include a specific, named managed network switch (e.g., "Cisco SG350"). Do not use a generic "Network Switch" item.
-    *   The design must include all necessary accessories for a complete installation (cables, mounts, connectors, PDUs, etc.).
-    *   If the room type is an Auditorium, Town Hall, Boardroom, or is noted to have poor acoustics, you MUST include a line item for acoustic treatment (e.g., "Artnovion Acoustic Panels").
 
 **OUTPUT FORMAT:**
 Return ONLY a valid JSON array of objects with the following properties:
-- category: string (Must be one from Rule #1)
+- category: string (Must be one from Rule #5)
 - itemDescription: string
 - brand: string
 - model: string
@@ -304,6 +316,62 @@ export const validateBoq = async (boq: Boq, requirements: string): Promise<Valid
             suggestions: [],
             missingComponents: [],
         };
+    }
+};
+
+/**
+ * Generates a technical schematic diagram for a room based on requirements and BOQ.
+ */
+export const generateRoomSchematic = async (answers: Record<string, any>, boq: Boq): Promise<string> => {
+    const model = 'imagen-4.0-generate-001';
+
+    const roomDescription = Object.entries(answers)
+        .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+        .join(', ');
+
+    const equipmentManifest = boq
+        .map(item => `- ${item.quantity}x ${item.itemDescription} (${item.brand} ${item.model})`)
+        .join('\n');
+    
+    const prompt = `
+      TASK: Create a professional AV system schematic diagram (functional block diagram).
+
+      STYLE:
+      - 2D technical drawing.
+      - Black and white line art on a white background.
+      - Minimalist and clear.
+      - Use standard rectangular blocks for equipment.
+      - Label each component with its model name. The text must be as legible as possible.
+      - Use clear, straight lines to represent signal flow.
+
+      ROOM CONTEXT:
+      - This schematic is for a ${answers.roomType || 'general use'} room.
+      - Key requirements: ${roomDescription}.
+
+      EQUIPMENT LIST (MUST be included and connected logically):
+      ${equipmentManifest}
+    `;
+
+    try {
+        const response = await ai.models.generateImages({
+            model: model,
+            prompt: prompt,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: 'image/jpeg',
+              aspectRatio: '16:9',
+            },
+        });
+
+        if (response.generatedImages && response.generatedImages.length > 0) {
+            const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+            return `data:image/jpeg;base64,${base64ImageBytes}`;
+        } else {
+            throw new Error("No image was generated by the API for the schematic.");
+        }
+    } catch (error) {
+        console.error('Error generating room schematic:', error);
+        throw error;
     }
 };
 

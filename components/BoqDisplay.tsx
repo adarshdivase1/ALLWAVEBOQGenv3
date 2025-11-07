@@ -8,6 +8,7 @@ import ImagePreviewModal from './ImagePreviewModal';
 import AutoResizeTextarea from './AutoResizeTextarea';
 import RoomVisualizationModal from './RoomVisualizationModal';
 import ValidationFeedback from './ValidationFeedback';
+import SchematicModal from './SchematicModal';
 
 import WandIcon from './icons/WandIcon';
 import ImageIcon from './icons/ImageIcon';
@@ -18,6 +19,7 @@ import EyeIcon from './icons/EyeIcon';
 import LoaderIcon from './icons/LoaderIcon';
 import PrintIcon from './icons/PrintIcon';
 import CheckCircleIcon from './icons/CheckCircleIcon';
+import SchematicIcon from './icons/SchematicIcon';
 
 
 interface BoqDisplayProps {
@@ -37,6 +39,11 @@ interface BoqDisplayProps {
   visualizationImageUrl: string | null;
   isValidating: boolean;
   validationResult: ValidationResult | null;
+  onGenerateSchematic: () => void;
+  onClearSchematic: () => void;
+  isGeneratingSchematic: boolean;
+  schematicError: string | null;
+  schematicImageUrl: string | null;
   selectedCurrency: Currency;
   onCurrencyChange: (currency: Currency) => void;
   exchangeRates: Record<Currency, number> | null;
@@ -46,12 +53,14 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
     boq, onRefine, isRefining, margin, onMarginChange, onBoqItemUpdate, onBoqItemAdd, onBoqItemDelete,
     onGenerateVisualization, onClearVisualization, isVisualizing, visualizationError, visualizationImageUrl,
     onValidateBoq, isValidating, validationResult,
+    onGenerateSchematic, onClearSchematic, isGeneratingSchematic, schematicError, schematicImageUrl,
     selectedCurrency, onCurrencyChange, exchangeRates
 }) => {
   const [isRefineModalOpen, setIsRefineModalOpen] = useState(false);
   const [isWebSearchModalOpen, setIsWebSearchModalOpen] = useState(false);
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [isVisualizationModalOpen, setIsVisualizationModalOpen] = useState(false);
+  const [isSchematicModalOpen, setIsSchematicModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<BoqItem | null>(null);
 
   useEffect(() => {
@@ -61,9 +70,19 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
     }
   }, [isVisualizing]);
 
+  useEffect(() => {
+    if (isGeneratingSchematic) {
+      setIsSchematicModalOpen(true);
+    }
+  }, [isGeneratingSchematic]);
+
   const handleVisualizationModalClose = () => {
     setIsVisualizationModalOpen(false);
     // State is no longer cleared on close, allowing the image to persist.
+  };
+
+  const handleSchematicModalClose = () => {
+    setIsSchematicModalOpen(false);
   };
 
   const handleVisualizeButtonClick = () => {
@@ -73,6 +92,14 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
     } else {
       // Otherwise, start the generation process (which will also open the modal via useEffect).
       onGenerateVisualization();
+    }
+  };
+  
+  const handleSchematicButtonClick = () => {
+    if (schematicImageUrl) {
+      setIsSchematicModalOpen(true);
+    } else {
+      onGenerateSchematic();
     }
   };
 
@@ -227,6 +254,14 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
             >
                 {isVisualizing ? <LoaderIcon /> : <EyeIcon />}
                 {isVisualizing ? 'Visualizing...' : (visualizationImageUrl ? 'View Visualization' : 'Visualize Room')}
+            </button>
+            <button
+                onClick={handleSchematicButtonClick}
+                disabled={!boq || boq.length === 0 || isGeneratingSchematic}
+                className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 disabled:bg-slate-200 dark:disabled:bg-slate-600 disabled:text-slate-400 dark:disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+                {isGeneratingSchematic ? <LoaderIcon /> : <SchematicIcon />}
+                {isGeneratingSchematic ? 'Generating...' : (schematicImageUrl ? 'View Schematic' : 'Generate Schematic')}
             </button>
             <button
                 onClick={() => window.print()}
@@ -406,6 +441,15 @@ const BoqDisplay: React.FC<BoqDisplayProps> = ({
         imageUrl={visualizationImageUrl}
         onRegenerate={onGenerateVisualization}
         onDelete={onClearVisualization}
+      />
+      <SchematicModal
+        isOpen={isSchematicModalOpen}
+        onClose={handleSchematicModalClose}
+        isLoading={isGeneratingSchematic}
+        error={schematicError}
+        imageUrl={schematicImageUrl}
+        onRegenerate={onGenerateSchematic}
+        onDelete={onClearSchematic}
       />
     </>
   );
