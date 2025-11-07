@@ -173,6 +173,50 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
+        id: 'presenterMicrophone',
+        text: 'Does a presenter need a dedicated microphone?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Yes, a wireless handheld microphone', value: 'wireless_handheld' },
+          { label: 'Yes, a wireless lavalier/lapel microphone', value: 'wireless_lavalier' },
+          { label: 'Yes, a microphone at a lectern', value: 'lectern_mic' },
+          { label: 'No dedicated presenter mic needed', value: 'no_presenter_mic' },
+        ],
+      },
+      {
+        id: 'audioPlayback',
+        text: 'What are the audio playback requirements?',
+        type: 'select',
+        options: [
+          { label: 'Voice reinforcement only (for calls and speech)', value: 'voice_only' },
+          { label: 'High-quality program audio (for videos, music)', value: 'program_audio' },
+        ],
+      },
+      {
+        id: 'speakerType',
+        text: 'What type of speakers are preferred for the room?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'In-Ceiling Speakers (discreet, even coverage)', value: 'ceiling_speakers' },
+          { label: 'Surface-Mount / On-Wall Speakers', value: 'wall_speakers' },
+          { label: 'Soundbar (mounted with display)', value: 'soundbar' },
+          { label: 'Pendant Speakers (for high/open ceilings)', value: 'pendant_speakers' },
+          { label: 'Floor-Standing / Bookshelf Speakers (high-fidelity)', value: 'floor_speakers' },
+          { label: 'Integrated in Video Bar', value: 'bar_integrated_speakers' },
+        ],
+      },
+      {
+        id: 'speakerCoverage',
+        text: 'What is the desired audio coverage pattern?',
+        type: 'select',
+        options: [
+          { label: 'Distributed (even coverage for all participants)', value: 'distributed' },
+          { label: 'Front of Room (focused near the display)', value: 'front_focused' },
+          { label: 'Stereo Left/Right of Display', value: 'stereo' },
+          { label: 'Zoned Audio (different audio in different areas)', value: 'zoned' },
+        ]
+      },
+      {
         id: 'audioBrands',
         text: 'Any preferred audio brands (mics, speakers, DSPs)?',
         type: 'multiple-choice',
@@ -192,26 +236,6 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'Logic', value: 'Logic' },
             { label: 'Gigatronics', value: 'Gigatronics' },
         ]
-      },
-      {
-        id: 'presenterMicrophone',
-        text: 'Does a presenter need a dedicated microphone?',
-        type: 'multiple-choice',
-        options: [
-          { label: 'Yes, a wireless handheld microphone', value: 'wireless_handheld' },
-          { label: 'Yes, a wireless lavalier/lapel microphone', value: 'wireless_lavalier' },
-          { label: 'Yes, a microphone at a lectern', value: 'lectern_mic' },
-          { label: 'No dedicated presenter mic needed', value: 'no_presenter_mic' },
-        ],
-      },
-      {
-        id: 'audioPlayback',
-        text: 'What are the audio playback requirements?',
-        type: 'select',
-        options: [
-          { label: 'Voice reinforcement only (for calls and speech)', value: 'voice_only' },
-          { label: 'High-quality program audio (for videos, music)', value: 'program_audio' },
-        ],
       },
     ],
   },

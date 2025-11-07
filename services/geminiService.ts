@@ -13,80 +13,44 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const generateBoq = async (requirements: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `You are a world-class, certified AV System Designer following AVIXA standards. Your task is to generate a comprehensive and **100% production-ready** Bill of Quantities (BOQ) based on the following requirements. The resulting design MUST be technically flawless, cohesive, and ready for immediate proposal to a client.
+    const prompt = `As an expert AV System Designer adhering to AVIXA standards, create a technically flawless, production-ready Bill of Quantities (BOQ) from the user's requirements.
 
-    **Client Requirements:** "${requirements}"
+**Client Requirements:** "${requirements}"
 
-    **CRITICAL DESIGN INSTRUCTIONS:**
+**MANDATORY DESIGN RULES:**
 
-    1.  **CATEGORY & ITEM ORDERING (NON-NEGOTIABLE):**
-        *   You MUST structure the entire BOQ in the following strict category order. Do not deviate.
-            1.  Display
-            2.  Video Conferencing & Cameras
-            3.  Video Distribution & Switching
-            4.  Audio - Microphones
-            5.  Audio - DSP & Amplification
-            6.  Audio - Speakers
-            7.  Control System
-            8.  Cabling & Infrastructure
-            9.  Mounts & Racks
-            10. Accessories
-        *   Group all related items under their correct category. For example, all display mounts go under "Mounts & Racks".
+1.  **BOQ Structure:**
+    *   You MUST use and order these categories exactly as listed: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System, 8. Cabling & Infrastructure, 9. Mounts & Racks, 10. Accessories.
+    *   Group all items correctly under their respective categories.
 
-    2.  **CORE SYSTEM ARCHITECTURE & ECOSYSTEM INTEGRITY (NON-NEGOTIABLE):**
-        *   **Choose ONE Ecosystem:** You must select a single, unified ecosystem for the core of the system (Control, Audio DSP, and Video Distribution). DO NOT mix and match core components from competing ecosystems.
-        *   **Strict Adherence:** If the user's brand preferences point to a specific ecosystem (e.g., "vcBrands: Yealink"), you MUST build the solution around that ecosystem.
-        *   **Avoid Redundancy and Conflicts:** Do not include duplicative or conflicting functionality. For instance, if a Yealink video conferencing kit includes a WPP30 for wireless presentation, you MUST NOT also add a Crestron AirMedia or Barco ClickShare. The system must be lean and logical.
-        *   **System Architecture Preference:** The user may specify a preference for system architecture via the \`vcArchitecture\` parameter.
-            *   If \`'vcArchitecture: all_in_one'\` is specified, you MUST prioritize an all-in-one video bar solution (e.g., Yealink A20/A30, Poly Studio X-series, Logitech Rally Bar). These devices integrate the camera, microphones, and speakers. The rest of the design should complement this choice.
-            *   If \`'vcArchitecture: component_based'\` is specified, or if the parameter is not present, you MUST design a system using discrete, high-performance components (e.g., a separate PTZ camera, ceiling or tabletop microphones, a dedicated DSP, and separate speakers). This approach is preferred for larger or more complex rooms.
-        *   **Example Scenarios:**
-            *   If you choose **Crestron** for control (e.g., CP4), you MUST use Crestron for AV-over-IP (e.g., DM-NVX) and compatible DSPs.
-            *   If you choose **Q-SYS** for audio and control (e.g., Core Nano), you MUST use Q-SYS for video (e.g., NV-Series) and Q-SYS peripherals.
-        *   **This is the most important rule. A design with conflicting core components is an automatic failure.**
-        *   **Matrix Switcher Logic:** If the requirements explicitly state \`'matrixSwitcherRequired: yes'\`, you MUST incorporate a dedicated matrix switcher compatible with your chosen ecosystem (e.g., a Crestron DMPS, Extron DTP CrossPoint). This is mandatory for complex routing needs (like multiple sources to multiple displays) and this user input overrides any simpler, built-in switching solutions that other components may offer.
+2.  **System Ecosystem & Logic:**
+    *   **Unified Ecosystem:** Select ONE single, unified ecosystem for core components (Control, Audio DSP, Video Distribution). DO NOT mix core brands (e.g., a Crestron processor with Q-SYS video). This is a critical rule.
+    *   **No Redundancy:** Avoid duplicative functionality. For instance, if a Yealink VC kit includes a WPP30 for wireless presentation, you MUST NOT add a separate Barco ClickShare.
+    *   **Architecture Preference:** If the user specifies \`vcArchitecture: all_in_one\`, you MUST design around an all-in-one video bar. If \`vcArchitecture: component_based\` is specified (or if it's absent), you MUST use a discrete component system (separate camera, mics, DSP, etc.).
+    *   **Matrix Switcher:** If the requirements state \`matrixSwitcherRequired: yes\`, you MUST include a dedicated matrix switcher from the chosen ecosystem. This user requirement is absolute and overrides any simpler switching solutions other components might offer.
 
-    3.  **MODEL & VERSIONING:**
-        *   You MUST specify current-generation, commercially available products. Do not use legacy or end-of-life models.
-        *   For example, when specifying Crestron AV-over-IP, you MUST use current models like the **DM-NVX-360** or **DM-NVX-363 series**. Do not use older models.
+3.  **Product Selection:**
+    *   Specify only current-generation, commercially available products. Do not use end-of-life models.
+    *   **Commercial Displays ONLY:** All displays MUST be professional/commercial grade (e.g., Samsung QMC series, LG UR series). You are strictly forbidden from using consumer televisions.
 
-    4.  **BRAND PREFERENCE ADHERENCE:**
-        *   The user's requirements may specify preferred brands (e.g., "vcBrands: Cisco, Poly"). You MUST prioritize products from these brands.
-        *   Only if a suitable product from the preferred brand list does not exist for a specific function may you select a product from another reputable, compatible brand.
-    
-    5.  **BRAND-SPECIFIC PRODUCT GUIDANCE:**
-        *   **Gigatronics (India):** If 'Gigatronics' is selected as a preferred brand, you should prioritize their products for the following categories:
-            *   **Connectivity & Infrastructure:** This is their core strength. Specify Gigatronics for cables (HDMI, USB, CAT6), connectors, wall plates, floor boxes, and table pop-up boxes.
-            *   **Signal Management:** Use Gigatronics for HDMI splitters, switchers, extenders (HDBaseT/wireless), and converters.
-            *   **Mounts & Racks:** Specify Gigatronics for AV racks and display mounts.
-            *   **Audio:** Gigatronics offers a range of audio equipment including amplifiers, microphones, and speakers suitable for standard commercial installations.
-        *   **Note:** Gigatronics India is distinct from the US Giga-tronics. Focus on their commercial AV product line.
+4.  **Brand Adherence:**
+    *   Strictly prioritize brands specified in the user's requirements.
+    *   **Gigatronics (India):** If selected, prioritize their products for: Connectivity & Infrastructure (cables, plates, boxes), Signal Management (splitters, extenders), Mounts & Racks, and standard audio components.
 
-    6.  **COMPONENT SELECTION CRITERIA (NON-NEGOTIABLE):**
-        *   **Commercial vs. Consumer Displays:** All displays MUST be professional/commercial grade. You MUST specify commercial signage displays (e.g., Samsung QMC series, LG UR series, Sony BZ series). **You are strictly forbidden from specifying consumer televisions (e.g., Samsung QLED TVs, LG OLED TVs).** Commercial displays are designed for longevity (e.g., 16/7 or 24/7 operation), extended warranties, and robust control system integration (RS-232, IP Control), which are critical in a professional AV environment.
+5.  **Completeness & Standards:**
+    *   For any AV-over-IP system, you MUST include a specific, named managed network switch (e.g., "Cisco SG350"). Do not use a generic "Network Switch" item.
+    *   The design must include all necessary accessories for a complete installation (cables, mounts, connectors, PDUs, etc.).
+    *   If the room type is an Auditorium, Town Hall, Boardroom, or is noted to have poor acoustics, you MUST include a line item for acoustic treatment (e.g., "Artnovion Acoustic Panels").
 
-    7.  **NETWORKING INFRASTRUCTURE:**
-        *   For any system utilizing AV over IP (e.g., DM-NVX, Q-SYS NV-Series, Dante), you MUST specify a managed network switch suitable for AV traffic.
-        *   You MUST provide a specific brand and model (e.g., "Cisco SG350", "Netgear M4250").
-        *   **DO NOT use generic terms like "Network Switch".** This is a critical component.
-
-    8.  **AVIXA STANDARDS COMPLIANCE:**
-        *   The entire system design, including signal flow, power management, grounding, and component choice, must strictly adhere to AVIXA standards for performance, reliability, and interoperability.
-        *   Include all necessary accessories: mounts, cables, connectors, power distribution units (PDUs), and rack shelves.
-
-    9.  **Acoustic & Lighting Treatment:**
-        *   If the room type is an Auditorium, Town Hall, Boardroom, or is described as having poor acoustics, you MUST include specific line items for acoustic treatment (e.g., "Artnovion Acoustic Panels").
-        *   If video conferencing or presentations are key functions, you MUST include appropriate lighting (e.g., "Lutron lighting control system," "specialized presenter spotlights").
-
-    **OUTPUT FORMAT:**
-    Return a JSON array of objects with the following properties:
-    - category: string (Must be one of the categories listed in Instruction #1)
-    - itemDescription: string
-    - brand: string
-    - model: string
-    - quantity: number
-    - unitPrice: number (realistic estimated price in USD, numbers only)
-    - totalPrice: number (quantity * unitPrice)
+**OUTPUT FORMAT:**
+Return ONLY a valid JSON array of objects with the following properties:
+- category: string (Must be one from Rule #1)
+- itemDescription: string
+- brand: string
+- model: string
+- quantity: number
+- unitPrice: number (realistic estimated price in USD, numbers only)
+- totalPrice: number (calculated as quantity * unitPrice)
     `;
 
     const responseSchema = {
