@@ -1,5 +1,3 @@
-
-
 import type { QuestionnaireSection } from '../types';
 
 export const questionnaire: QuestionnaireSection[] = [
@@ -15,8 +13,10 @@ export const questionnaire: QuestionnaireSection[] = [
           { label: 'Huddle Room', value: 'huddle' },
           { label: 'Boardroom', value: 'boardroom' },
           { label: 'Classroom / Training Room', value: 'classroom' },
+          { label: 'Divisible Room', value: 'divisible_room' },
           { label: 'Auditorium', value: 'auditorium' },
           { label: 'Town Hall / All-Hands Space', value: 'town_hall' },
+          { label: 'Cafeteria / Multipurpose Space', value: 'cafeteria' },
           { label: 'Experience Center', value: 'experience_center' },
           { label: 'NOC / Command Center', value: 'noc' },
           { label: 'Executive Office', value: 'executive_office' },
@@ -28,45 +28,66 @@ export const questionnaire: QuestionnaireSection[] = [
       { id: 'roomHeight', text: 'Room Height (in feet)', type: 'number' },
       { id: 'capacity', text: 'How many people will the room typically accommodate?', type: 'number' },
       {
-        id: 'tableShape',
-        text: 'What is the shape of the primary table/seating arrangement?',
+        id: 'seatingArrangement',
+        text: 'What is the primary seating arrangement?',
         type: 'select',
         options: [
           { label: 'Long Boardroom/Rectangle Table', value: 'boardroom_long' },
-          { label: 'U-Shape', value: 'u_shape' },
-          { label: 'Classroom Style (Rows)', value: 'classroom_rows' },
-          { label: 'Round/Square Table', value: 'round_square' },
-          { label: 'No Table / Open Space', value: 'open_space' },
+          { label: 'U-Shape or V-Shape', value: 'u_shape' },
+          { label: 'Classroom Style (Rows on flat floor)', value: 'classroom_rows_flat' },
+          { label: 'Tiered Classroom Style (Rows on sloped floor)', value: 'classroom_rows_tiered' },
+          { label: 'Theater/Auditorium Style (Raked/Elevated Seating)', value: 'auditorium_tiered' },
+          { label: 'Cabaret Style (Round Tables on flat floor)', value: 'cabaret_rounds_flat' },
+          { label: 'Tiered Cabaret Style (Round Tables on sloped floor)', value: 'cabaret_rounds_tiered' },
+          { label: 'Flexible/Movable Furniture', value: 'flexible_furniture' },
+          { label: 'Limited/No Seating (Open Space)', value: 'open_space' },
         ],
       },
-      {
-        id: 'aesthetics',
-        text: 'What is the aesthetic requirement for the equipment?',
+       {
+        id: 'naturalLightLevel',
+        text: 'What is the level of natural/ambient light in the room?',
         type: 'select',
         options: [
-            { label: 'Standard (Visible equipment is acceptable)', value: 'standard' },
-            { label: 'Architecturally Integrated (Hide equipment where possible)', value: 'integrated' },
+          { label: 'Low (no windows or fully blacked out)', value: 'low' },
+          { label: 'Medium (some windows with blinds/shades)', value: 'medium' },
+          { label: 'High (large windows, significant daylight)', value: 'high' },
         ],
       },
     ],
   },
   {
-    title: '2. Display System',
+    title: '2. Display & Playback Systems',
     questions: [
       {
-        id: 'displayType',
-        text: 'What kind of main display is needed?',
+        id: 'mainDisplayTechnology',
+        text: 'What is the technology for the MAIN display(s)?',
         type: 'select',
         options: [
           { label: 'Single Large Format Display (LFD)', value: 'single_lfd' },
           { label: 'Dual Large Format Displays (LFDs)', value: 'dual_lfd' },
-          { label: 'Video Wall', value: 'video_wall' },
-          { label: 'Projector and Screen', value: 'projector' },
+          { label: 'Single Projector and Screen', value: 'single_projector' },
+          { label: 'Dual Projectors and Screens', value: 'dual_projector' },
+          { label: 'Video Wall (specify config below)', value: 'video_wall' },
+          { label: 'Direct View LED / Active LED', value: 'direct_view_led' },
         ],
       },
       {
+        id: 'videoWallConfig',
+        text: 'If Video Wall, specify configuration (e.g., 2x2, 3x3)',
+        type: 'text',
+      },
+      {
+        id: 'interactiveDisplay',
+        text: 'Is an interactive/touch capability required for the main display?',
+        type: 'select',
+        options: [
+          { label: 'Yes, interactive capability is essential', value: 'yes' },
+          { label: 'No, a standard non-touch display is sufficient', value: 'no' },
+        ],
+      },
+       {
         id: 'displayBrands',
-        text: 'Are there any preferred display brands?',
+        text: 'Any preferred MAIN display brands?',
         type: 'multiple-choice',
         options: [
           { label: 'Samsung', value: 'Samsung' },
@@ -85,13 +106,52 @@ export const questionnaire: QuestionnaireSection[] = [
           { label: 'Absen (Video Walls)', value: 'Absen' },
         ],
       },
-       {
-        id: 'interactiveDisplay',
-        text: 'Is an interactive/touch display required for collaboration?',
-        type: 'select',
+      {
+        id: 'secondaryDisplays',
+        text: 'Are any secondary/supplemental displays needed?',
+        type: 'multiple-choice',
         options: [
-          { label: 'Yes, interactive capability is essential', value: 'yes' },
-          { label: 'No, a standard non-touch display is sufficient', value: 'no' },
+            { label: 'Confidence/Stage Monitors for Presenter', value: 'confidence_monitor' },
+            { label: 'Repeater Displays (for long or wide rooms)', value: 'repeater_displays' },
+            { label: 'Stage Lip / Front Row Displays', value: 'stage_lip_displays' },
+            { label: 'Digital Signage / Information Displays in-room', value: 'digital_signage' },
+        ],
+      },
+      {
+        id: 'secondaryDisplayBrands',
+        text: 'Any preferred SECONDARY display brands?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Samsung', value: 'Samsung' },
+          { label: 'LG', value: 'LG' },
+          { label: 'Sony', value: 'Sony' },
+          { label: 'ViewSonic', value: 'ViewSonic' },
+          { label: 'NEC', value: 'NEC' },
+          { label: 'Dell', value: 'Dell' },
+        ],
+      },
+      {
+        id: 'playbackSources',
+        text: 'What media playback sources are needed?',
+        type: 'multiple-choice',
+        options: [
+            { label: 'PC/Laptop Audio/Video', value: 'pc_laptop_playback' },
+            { label: 'Dedicated Media Player (e.g., BrightSign)', value: 'media_player' },
+            { label: 'Blu-ray Player', value: 'bluray_player' },
+            { label: 'Wireless Streaming (Apple TV, Chromecast, etc.)', value: 'wireless_streaming_device' },
+            { label: 'Bluetooth Audio Receiver', value: 'bluetooth_audio' },
+        ],
+      },
+      {
+        id: 'playbackSourceBrands',
+        text: 'Any preferred playback source brands?',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Brightsign', value: 'Brightsign' },
+          { label: 'Apple (Apple TV)', value: 'Apple' },
+          { label: 'Google (Chromecast)', value: 'Google' },
+          { label: 'Sony (Blu-ray)', value: 'Sony' },
+          { label: 'Panasonic (Blu-ray)', value: 'Panasonic' },
         ],
       },
     ],
@@ -143,6 +203,8 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'DTEN', value: 'DTEN' },
             { label: 'Peoplelink', value: 'Peoplelink' },
             { label: 'Microsoft (Teams)', value: 'Microsoft' },
+            { label: 'QSC', value: 'QSC' },
+            { label: 'Liberty', value: 'Liberty' },
         ]
       },
       {
@@ -169,6 +231,7 @@ export const questionnaire: QuestionnaireSection[] = [
           { label: 'Ceiling microphones (for a clean table)', value: 'ceiling_mics' },
           { label: 'Tabletop microphones (wired or wireless)', value: 'table_mics' },
           { label: 'Microphone integrated into a soundbar/video bar', value: 'bar_mics' },
+          { label: 'Throwable Microphone (e.g., Catchbox)', value: 'throwable_mic' },
           { label: 'No microphones needed', value: 'no_mics' },
         ],
       },
@@ -184,13 +247,15 @@ export const questionnaire: QuestionnaireSection[] = [
         ],
       },
       {
-        id: 'audioPlayback',
-        text: 'What are the audio playback requirements?',
+        id: 'bgmPaSystem',
+        text: 'Is a Background Music (BGM) and/or Public Address (PA) system required?',
         type: 'select',
         options: [
-          { label: 'Voice reinforcement only (for calls and speech)', value: 'voice_only' },
-          { label: 'High-quality program audio (for videos, music)', value: 'program_audio' },
-        ],
+            { label: 'Not Required', value: 'none' },
+            { label: 'Background Music (BGM) only', value: 'bgm_only' },
+            { label: 'Public Address (PA) for announcements only', value: 'pa_only' },
+            { label: 'Both BGM and PA are required', value: 'both' },
+        ]
       },
       {
         id: 'speakerType',
@@ -201,19 +266,17 @@ export const questionnaire: QuestionnaireSection[] = [
           { label: 'Surface-Mount / On-Wall Speakers', value: 'wall_speakers' },
           { label: 'Soundbar (mounted with display)', value: 'soundbar' },
           { label: 'Pendant Speakers (for high/open ceilings)', value: 'pendant_speakers' },
-          { label: 'Floor-Standing / Bookshelf Speakers (high-fidelity)', value: 'floor_speakers' },
+          { label: 'Line Array Speakers (for large venues)', value: 'line_array' },
           { label: 'Integrated in Video Bar', value: 'bar_integrated_speakers' },
         ],
       },
       {
-        id: 'speakerCoverage',
-        text: 'What is the desired audio coverage pattern?',
+        id: 'audioZoningRequired',
+        text: 'Is audio zoning required (separate volume control for different areas)?',
         type: 'select',
         options: [
-          { label: 'Distributed (even coverage for all participants)', value: 'distributed' },
-          { label: 'Front of Room (focused near the display)', value: 'front_focused' },
-          { label: 'Stereo Left/Right of Display', value: 'stereo' },
-          { label: 'Zoned Audio (different audio in different areas)', value: 'zoned' },
+          { label: 'No, a single audio zone is sufficient', value: 'no' },
+          { label: 'Yes, multiple audio zones are needed', value: 'yes' },
         ]
       },
       {
@@ -248,23 +311,23 @@ export const questionnaire: QuestionnaireSection[] = [
         type: 'multiple-choice',
         options: [
           { label: 'Wireless Presentation (e.g., Barco ClickShare, Crestron AirMedia)', value: 'wireless' },
-          { label: 'Wired HDMI at the table', value: 'hdmi_table' },
-          { label: 'Wired USB-C at the table (video & power)', value: 'usbc_table' },
-          { label: 'Wired connections at a wall plate', value: 'wall_plate_connections' },
+          { label: 'Wired connections (specify locations and types below)', value: 'wired' },
         ],
       },
       {
-        id: 'matrixSwitcherRequired',
-        text: 'Is a dedicated matrix switcher required for complex routing (e.g., multiple sources to multiple displays)?',
-        type: 'select',
+        id: 'connectivityPoints',
+        text: 'Where should wired connections be located?',
+        type: 'multiple-choice',
         options: [
-          { label: 'Yes, a matrix switcher is necessary', value: 'yes' },
-          { label: 'No, simple source selection is sufficient', value: 'no' },
+            { label: 'Tabletop Box (Cubby/Grommet)', value: 'tabletop_box' },
+            { label: 'Floor Box', value: 'floor_box' },
+            { label: 'Wall Plate', value: 'wall_plate' },
+            { label: 'Lectern / Podium Plate', value: 'lectern_plate' },
         ],
       },
       {
-        id: 'cableCubbyPorts',
-        text: 'Which ports are required in the tabletop cable cubby/box?',
+        id: 'requiredWiredInputs',
+        text: 'Which wired input ports are required in the room?',
         type: 'multiple-choice',
         options: [
             { label: 'HDMI Input', value: 'hdmi_input' },
@@ -273,6 +336,15 @@ export const questionnaire: QuestionnaireSection[] = [
             { label: 'DisplayPort Input', value: 'displayport_input' },
             { label: 'RJ-45 Network Jack', value: 'network_jack' },
             { label: 'AC Power Outlet', value: 'ac_power' },
+        ],
+      },
+       {
+        id: 'matrixSwitcherRequired',
+        text: 'Is a dedicated matrix switcher required for complex routing?',
+        type: 'select',
+        options: [
+          { label: 'Yes, a matrix switcher is necessary', value: 'yes' },
+          { label: 'No, simple source selection is sufficient', value: 'no' },
         ],
       },
       {
@@ -303,12 +375,13 @@ export const questionnaire: QuestionnaireSection[] = [
       {
         id: 'controlSystem',
         text: 'How should the room AV system be controlled?',
-        type: 'select',
+        type: 'multiple-choice',
         options: [
           { label: 'Simple remote or auto-source switching', value: 'remote' },
           { label: 'Wall-mounted keypad for basic functions', value: 'keypad' },
           { label: 'Tabletop touch panel for full control', value: 'touch_panel' },
-          { label: 'No centralized control needed', value: 'none' },
+          { label: 'Control via PC/Software Interface', value: 'pc_software_control' },
+          { label: 'Integration with Building Management System (BMS)', value: 'bms_integration' },
         ],
       },
       {
@@ -328,8 +401,80 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '6. Mounts & Racks',
+    title: '6. Infrastructure (Racks, Mounts, Power, Network)',
     questions: [
+        {
+            id: 'wallConstruction',
+            text: 'What is the primary wall construction material for mounting?',
+            type: 'select',
+            options: [
+                { label: 'Standard Drywall / Gypsum', value: 'drywall' },
+                { label: 'Concrete / Masonry', value: 'concrete' },
+                { label: 'Glass Wall', value: 'glass' },
+                { label: 'Architectural Wood/Panels', value: 'wood_panel' },
+                { label: 'Not mounting on walls (e.g., using floor stands)', value: 'none' },
+            ],
+        },
+        {
+            id: 'ceilingConstruction',
+            text: 'What is the ceiling construction type?',
+            type: 'select',
+            options: [
+                { label: 'Acoustic Drop Tile (T-Bar Grid)', value: 'acoustic_drop_tile' },
+                { label: 'Drywall / Gypsum Board', value: 'drywall' },
+                { label: 'Open / Exposed Structure (Trusses, Concrete)', value: 'open_exposed' },
+                { label: 'Wood / Architectural Ceiling', value: 'wood_architectural' },
+            ],
+        },
+        {
+            id: 'mainDisplayMountType',
+            text: 'What type of mount is needed for the MAIN display?',
+            type: 'select',
+            options: [
+                { label: 'Fixed / Low-Profile Wall Mount', value: 'fixed_wall' },
+                { label: 'Tilting Wall Mount', value: 'tilting_wall' },
+                { label: 'Articulating Arm Wall Mount', value: 'articulating_wall' },
+                { label: 'Push-Pull / Serviceable Video Wall Mount', value: 'video_wall_mount_push_pull' },
+                { label: 'Recessed In-Wall Mount', value: 'recessed_wall' },
+                { label: 'Ceiling Mount', value: 'ceiling_mount' },
+                { label: 'Mobile Cart / Floor Stand', value: 'mobile_cart' },
+                { label: 'Glass Wall Mount', value: 'glass_mount' },
+                { label: 'No specific mount needed (e.g., display has stand)', value: 'none' },
+            ],
+        },
+        {
+            id: 'secondaryDisplayMountType',
+            text: 'What type of mount is needed for SECONDARY displays?',
+            type: 'select',
+            options: [
+                { label: 'N/A - No secondary displays', value: 'na' },
+                { label: 'Fixed / Low-Profile Wall Mount', value: 'fixed_wall' },
+                { label: 'Ceiling Mount (Pole)', value: 'ceiling_mount_pole' },
+                { label: 'Floor Stand (for confidence monitors)', value: 'floor_stand' },
+                { label: 'Mobile Cart / Stand', value: 'mobile_cart' },
+            ],
+        },
+        {
+            id: 'rackRequired',
+            text: 'Is an equipment rack required?',
+            type: 'select',
+            options: [
+                { label: 'Yes, a full-size floor-standing rack (42U)', value: '42u_rack' },
+                { label: 'Yes, a half-size floor-standing rack (24U)', value: '24u_rack' },
+                { label: 'Yes, a small credenza or wall-mount rack (12U)', value: '12u_rack' },
+                { label: 'No, equipment will be mounted behind display or in furniture', value: 'no_rack' },
+            ],
+        },
+        {
+            id: 'rackLocation',
+            text: 'If a rack is required, where will it be located?',
+            type: 'select',
+            options: [
+                { label: 'N/A - No rack needed', value: 'na' },
+                { label: 'Inside the room (in a credenza or corner)', value: 'in_room' },
+                { label: 'In a separate, dedicated AV closet / Rack Room', value: 'av_closet' },
+            ],
+        },
         {
           id: 'mountAndRackBrands',
           text: 'Are there any preferred Mount & Rack brands?',
@@ -350,50 +495,74 @@ export const questionnaire: QuestionnaireSection[] = [
           ]
         },
         {
-            id: 'displayMountType',
-            text: 'What type of mount is needed for the main display?',
+            id: 'powerInfrastructure',
+            text: 'What is the state of the power infrastructure?',
             type: 'select',
             options: [
-                { label: 'Fixed / Low-Profile Wall Mount', value: 'fixed_wall' },
-                { label: 'Tilting Wall Mount', value: 'tilting_wall' },
-                { label: 'Articulating Arm Wall Mount (for single displays)', value: 'articulating_wall' },
-                { label: 'Push-Pull / Serviceable Video Wall Mount', value: 'video_wall_mount_push_pull' },
-                { label: 'Recessed In-Wall Mount (for clean aesthetics)', value: 'recessed_wall' },
-                { label: 'Ceiling Mount', value: 'ceiling_mount' },
-                { label: 'Mobile Cart / Stand', value: 'mobile_cart' },
-                { label: 'No specific mount needed (e.g., display has stand)', value: 'none' },
+                { label: 'Sufficient outlets at all key locations', value: 'sufficient' },
+                { label: 'Power may need to be extended to some locations', value: 'extend_power' },
             ],
         },
         {
-            id: 'cameraMounting',
-            text: 'How should the video conferencing camera be mounted?',
+            id: 'upsRequirement',
+            text: 'Is an Uninterruptible Power Supply (UPS) required for reliability?',
             type: 'select',
             options: [
-                { label: 'Integrated with display/video bar', value: 'integrated' },
-                { label: 'On a shelf/mount above the display', value: 'above_display' },
-                { label: 'On a shelf/mount below the display', value: 'below_display' },
-                { label: 'On a dedicated wall mount', value: 'wall_mount' },
-                { label: 'On a ceiling mount', value: 'ceiling_mount' },
-                { label: 'On a Tripod (for mobile or temporary use)', value: 'tripod' },
-                { label: 'Custom mount (specify in "Other Requirements")', value: 'custom_mount' },
-                { label: 'Not applicable', value: 'na' },
+                { label: 'No UPS required', value: 'none' },
+                { label: 'Yes, for the main equipment rack', value: 'ups_for_rack' },
+                { label: 'Yes, for the rack and main displays', value: 'ups_for_rack_and_displays' },
             ],
         },
         {
-            id: 'rackRequired',
-            text: 'Is an equipment rack required?',
+            id: 'networkInfrastructure',
+            text: 'What is the state of the network infrastructure?',
             type: 'select',
             options: [
-                { label: 'Yes, a full-size floor-standing rack (42U)', value: '42u_rack' },
-                { label: 'Yes, a half-size floor-standing rack (24U)', value: '24u_rack' },
-                { label: 'Yes, a small credenza or wall-mount rack (12U)', value: '12u_rack' },
-                { label: 'No, equipment will be mounted behind display or in furniture', value: 'no_rack' },
+                { label: 'Dedicated network drops are available for AV', value: 'available' },
+                { label: 'Network drops need to be coordinated with IT', value: 'coordinate' },
             ],
         },
     ]
   },
   {
-    title: '7. Lighting & Acoustics',
+    title: '7. Room Acoustics',
+    questions: [
+       {
+        id: 'acousticNeeds',
+        text: 'How would you describe the acoustic environment?',
+        type: 'select',
+        options: [
+            { label: 'Good (minimal echo, quiet)', value: 'good' },
+            { label: 'Standard (some echo, typical office noise)', value: 'standard' },
+            { label: 'Poor (very echoey, noisy, hard surfaces)', value: 'poor' },
+        ]
+      },
+      {
+        id: 'acousticTreatmentType',
+        text: 'What type of acoustic treatment is desired/required?',
+        type: 'multiple-choice',
+        options: [
+            { label: 'Acoustic Wall Panels', value: 'wall_panels' },
+            { label: 'Ceiling Baffles or Clouds', value: 'ceiling_baffles' },
+            { label: 'Bass Traps (for corners)', value: 'bass_traps' },
+            { label: 'Acoustic Carpet / Rugs', value: 'acoustic_flooring' },
+        ],
+      },
+       {
+        id: 'primaryNoiseSources',
+        text: 'What are the primary sources of noise in or near the room?',
+        type: 'multiple-choice',
+        options: [
+            { label: 'Loud HVAC system', value: 'hvac' },
+            { label: 'Noise from adjacent rooms or hallways', value: 'adjacent_rooms' },
+            { label: 'Exterior noise (traffic, etc.)', value: 'exterior_noise' },
+            { label: 'In-room equipment noise (projectors, racks)', value: 'equipment_noise' },
+        ],
+      },
+    ],
+  },
+  {
+    title: '8. Lighting & Environment Control',
     questions: [
         {
           id: 'lightingControl',
@@ -401,34 +570,36 @@ export const questionnaire: QuestionnaireSection[] = [
           type: 'select',
           options: [
             { label: 'No, lighting is separate', value: 'no' },
-            { label: 'Basic Dimming Control', value: 'dimming' },
+            { label: 'Basic On/Off/Dimming Control', value: 'dimming' },
             { label: 'Full Integration (Scenes, Presets, etc.)', value: 'full_integration' },
           ],
         },
         {
-          id: 'specialtyLighting',
-          text: 'Are there any special lighting requirements?',
-          type: 'multiple-choice',
-          options: [
-            { label: 'Stage / Presenter Lighting', value: 'stage_lighting' },
-            { label: 'Architectural / Mood Lighting', value: 'architectural_lighting' },
-            { label: 'Whiteboard / Focus Area Lighting', value: 'focus_lighting' },
-          ],
-        },
-        {
-            id: 'acousticNeeds',
-            text: 'How would you describe the acoustic environment?',
+            id: 'existingLightingFixtures',
+            text: 'What type of lighting fixtures are installed?',
             type: 'select',
             options: [
-                { label: 'Standard office (some echo)', value: 'standard' },
-                { label: 'Good (minimal echo, quiet)', value: 'good' },
-                { label: 'Poor (very echoey, noisy, hard surfaces)', value: 'poor' },
-            ]
-        }
+              { label: 'Dimmable LED', value: 'dimmable_led' },
+              { label: 'Non-Dimmable LED', value: 'nondimmable_led' },
+              { label: 'Dimmable Fluorescent', value: 'dimmable_fluorescent' },
+              { label: 'Non-Dimmable Fluorescent', value: 'nondimmable_fluorescent' },
+              { label: 'Incandescent / Halogen', value: 'incandescent' },
+              { label: 'Unknown / Other', value: 'unknown' },
+            ],
+        },
+        {
+            id: 'shadeControl',
+            text: 'Is integrated control of window shades/blinds required?',
+            type: 'select',
+            options: [
+                { label: 'No, shades are manual or not present', value: 'no' },
+                { label: 'Yes, motorized shade control is required', value: 'yes' },
+            ],
+        },
     ],
   },
   {
-    title: '8. Additional Features',
+    title: '9. Additional Features & Services',
     questions: [
         {
           id: 'roomScheduling',
@@ -455,6 +626,25 @@ export const questionnaire: QuestionnaireSection[] = [
           options: [
             { label: 'Yes, an ALS is required', value: 'yes' },
             { label: 'No, not required', value: 'no' },
+          ],
+        },
+         {
+          id: 'intercomSystemRequired',
+          text: 'Is a production intercom system required?',
+          type: 'select',
+          options: [
+            { label: 'No, not required', value: 'no' },
+            { label: 'Yes, a production intercom is required', value: 'yes' },
+          ],
+        },
+        {
+          id: 'userTrainingRequired',
+          text: 'Is formal user training required upon project completion?',
+          type: 'select',
+          options: [
+            { label: 'No, a user guide/documentation is sufficient', value: 'no' },
+            { label: 'Yes, a remote (video call) training session', value: 'remote_training' },
+            { label: 'Yes, an on-site training session for users', value: 'onsite_training' },
           ],
         },
         { id: 'other', text: 'Are there any other specific requirements?', type: 'text' },

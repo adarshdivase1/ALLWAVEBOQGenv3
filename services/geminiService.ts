@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type } from '@google/genai';
 import type { Boq, BoqItem, ProductDetails, Room, ValidationResult, GroundingSource } from '../types';
 
@@ -14,7 +12,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
  */
 export const generateBoq = async (requirements: string): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
-    const prompt = `You are a world-class, senior AV Systems Designer. Your task is to create a 100% technically flawless, logical, and production-ready Bill of Quantities (BOQ) based on the client's detailed requirements. You must adhere strictly to all AVIXA standards and the rules below.
+    const prompt = `You are a world-class, senior AV Systems Designer. Your task is to create a 100% technically flawless, logical, and production-ready Bill of Quantities (BOQ) based on the client's detailed requirements from a comprehensive questionnaire. You must adhere strictly to all AVIXA standards and all rules below.
 
 **Client Requirements (from questionnaire):** "${requirements}"
 
@@ -26,37 +24,54 @@ export const generateBoq = async (requirements: string): Promise<Boq> => {
     *   **No Redundancy:** Avoid duplicative functionality. If a Yealink VC kit includes wireless presentation, DO NOT add a separate Barco ClickShare.
     *   **Current Products:** Specify only current-generation, commercially available products. Do not use end-of-life, outdated, or consumer-grade models. All displays MUST be professional/commercial grade.
 
-2.  **Sizing & Coverage (Based on Room Dimensions & Capacity):**
-    *   **Display Sizing (AVIXA 4:6:8 Rule):** Calculate the minimum required display height based on the room length. Assume the furthest viewer is at the back of the room.
-        *   For Boardrooms, NOCs, or Experience Centers, use the "Critical Viewing" rule (furthest viewer <= 4x image height).
-        *   For all other rooms, use the "Detailed Viewing" rule (furthest viewer <= 6x image height).
-        *   Select a standard commercial display size (e.g., 55", 65", 75", 86", 98") that meets or exceeds this calculated height.
-    *   **Audio Coverage:** The goal is even sound pressure level (SPL) and high speech intelligibility across the entire seating area.
-        *   For rooms longer than 15 feet or with more than 8 people, you MUST specify a sufficient number of ceiling speakers to achieve this. Calculate the number based on room dimensions and typical speaker dispersion.
-        *   An all-in-one video bar is only an acceptable audio solution for Huddle Rooms or small conference rooms (under 15 feet long).
-    *   **Microphone Coverage:** Ensure complete audio capture for all participants. For any room with a capacity over 6, ceiling or tabletop microphones are mandatory. The number and placement must be appropriate for the \`tableShape\` and room size.
-    *   **Camera Field of View (FOV):** The selected camera(s) MUST be able to capture all participants. For long rooms, prioritize a camera with strong optical zoom (PTZ). For wide rooms or U-shaped tables, prioritize a camera with a wide FOV (90 degrees or more) and auto-framing capabilities.
+2.  **Sizing & Coverage (AVIXA Standards):**
+    *   **Display Sizing (AVIXA 4:6:8 Rule):** Calculate the minimum required display height based on the room length. Assume the furthest viewer is at the back of the room. For Boardrooms, NOCs, or Experience Centers, use "Critical Viewing" (furthest viewer <= 4x image height). For all other rooms, use "Detailed Viewing" (furthest viewer <= 6x image height). Select a standard commercial display size (e.g., 55", 65", 75", 86", 98") that meets or exceeds this calculated height.
+    *   **Display Brightness (AVIXA ISCR):** Consider \`naturalLightLevel\`. If 'high', you MUST specify high-brightness displays (min 700 nits) or a high-lumen projector with an Ambient Light Rejecting (ALR) screen.
+    *   **Audio Coverage:** Ensure even sound pressure level (SPL) and high speech intelligibility across the entire seating area. For rooms longer than 15 feet or with more than 8 people, you MUST specify a sufficient number of ceiling speakers.
+    *   **Microphone Coverage:** Ensure complete audio capture for all participants. For any room with a capacity over 6, ceiling or tabletop microphones are mandatory.
+    *   **Camera Field of View (FOV):** The selected camera(s) MUST capture all participants based on the seating arrangement and room dimensions.
 
-3.  **Specific User Requirements:**
-    *   **Architecture Preference:** If \`vcArchitecture: all_in_one\` is specified, you MUST design around an all-in-one video bar. If \`vcArchitecture: component_based\` is specified (or absent), you MUST use a discrete component system.
-    *   **Matrix Switcher:** If \`matrixSwitcherRequired: yes\` is specified, you MUST include a dedicated matrix switcher. This overrides any simpler switching solutions other components might offer.
-    *   **Brand Adherence:** Strictly prioritize brands specified in the user's requirements (e.g., \`displayBrands\`, \`vcBrands\`, \`controlBrands\`). If \`Gigatronics (India)\` is selected, use them for cabling, mounts, and accessories where appropriate.
+3.  **Advanced Display & Audio Logic:**
+    *   **Display Types:** A \`video_wall\` or \`direct_view_led\` requires a dedicated video processor/controller. Use \`videoWallConfig\` to determine the number of displays. \`secondaryDisplays\` (e.g., 'Confidence Monitors') require their own screens and dedicated video outputs from the switching system.
+    *   **Audio Types:** For \`bgmPaSystem\` ('bgm_only', 'pa_only', or 'both'), you MUST include a 70V/100V multi-zone amplifier and 70V speakers, separate from conferencing audio. If \`audioZoningRequired\` is 'yes', specify a DSP and/or amplifier with multiple output zones. If \`microphoneType\` includes \`throwable_mic\`, add a 'Catchbox'.
 
-4.  **Completeness & Ancillaries:**
-    *   You MUST include every necessary accessory for a complete installation. This includes:
-        *   A specific, named, managed network switch (e.g., "Cisco SG350", "Netgear AV Line M4250") for ANY system using AV-over-IP components.
-        *   The correct wall or ceiling mount for every display and camera.
-        *   A rack-mount power distribution unit (PDU) and blank panels for any equipment rack.
-        *   All required cables (HDMI, USB, Cat6, speaker wire), connectors, and wall plates. The quantity and length must be logical for the room size.
-    *   If the room type is an Auditorium, Town Hall, Boardroom, or \`acousticNeeds\` is 'poor', you MUST include a line item for acoustic treatment.
+4.  **Acoustics, Lighting & Environmental Control (CRITICAL):**
+    *   **Acoustics:** If \`acousticNeeds\` is 'poor', or if there are significant \`primaryNoiseSources\`, you MUST include line items for the specific treatments selected in \`acousticTreatmentType\` (e.g., 'Acoustic Wall Panels', 'Ceiling Baffles'). These items belong in the 'Acoustic Treatment' category.
+    *   **Lighting Control:** If \`lightingControl\` is 'dimming' or 'full_integration', you MUST include a compatible lighting control system (e.g., Lutron, Crestron) and the correct type of dimmers/interfaces based on \`existingLightingFixtures\` (e.g., phase-adaptive dimmers for LEDs).
+    *   **Shade Control:** If \`shadeControl\` is 'yes', you MUST include motorized shades, a power supply, and a control interface (e.g., Somfy) compatible with the main control system.
 
-5.  **BOQ Structure & Formatting:**
-    *   You MUST use and order these categories exactly: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System, 8. Cabling & Infrastructure, 9. Mounts & Racks, 10. Accessories.
+5.  **Divisible Room & Control Logic:**
+    *   **Divisible Rooms:** If \`roomType\` is \`divisible_room\`, the entire design MUST support this. This requires a scalable matrix switcher, a DSP with sufficient I/O and AEC for all combinations, and a control system with logic for combined/separate modes.
+    *   **Control Systems:** \`controlSystem\` is multi-select. Include hardware for ALL selected options. If \`bms_integration\` is chosen, the control processor MUST have a BACnet/IP gateway.
+
+6.  **Infrastructure & Connectivity Logic (CRITICAL):**
+    *   **Connection Points:** You MUST specify the correct physical hardware (e.g., a specific Crestron FT2-700 for 'tabletop_box', a brand-name floor box for 'floor_box'). Distribute the ports from \`requiredWiredInputs\` logically across the selected \`connectivityPoints\`.
+    *   **Connectivity Hardware:** Include all necessary transmitters, receivers (HDBaseT or AV-over-IP), and cabling for EACH connection point to integrate it back to the main system rack.
+    *   **Power & Network:**
+        *   If \`powerInfrastructure\` is 'extend_power', include power extension cables and/or floor-rated cable concealers.
+        *   If \`upsRequirement\` is not 'none', you MUST include a rack-mountable UPS with an appropriate VA rating for the specified load ('ups_for_rack' or 'ups_for_rack_and_displays').
+        *   If \`networkInfrastructure\` is 'coordinate', add a note in the description for the main AV network switch: "Requires coordination with IT for network drop activation/installation".
+    *   **Intercom:** If \`intercomSystemRequired\` is 'yes', add a complete production intercom system (e.g., Clear-Com, RTS) including a base station, beltpacks, and headsets.
+
+7.  **Completeness & Ancillaries:**
+    *   You MUST include every necessary accessory for a complete installation.
+    *   A specific, named, managed network switch for ANY system using AV-over-IP.
+    *   The correct mount for every device, respecting \`wallConstruction\` and \`ceilingConstruction\`.
+        *   If \`ceilingConstruction\` is 'acoustic_drop_tile', ceiling speakers and mics MUST have tile bridges.
+        *   If 'glass' wall, specify specialized glass mounts or floor stands.
+        *   If 'open_exposed' ceiling, specify pendant mounts or beam clamps.
+    *   A rack-mount power distribution unit (PDU) and blank panels for any equipment rack.
+    *   All required cables, connectors, and wall plates.
+    *   If the \`rackLocation\` is in an 'av_closet', calculate cable lengths and add extenders if necessary.
+    *   If \`userTrainingRequired\` is not 'no', you MUST add a line item for the specified training (e.g., 'On-site User Training Session') in the 'Accessories & Services' category.
+
+8.  **BOQ Structure & Formatting:**
+    *   You MUST use and order these categories exactly: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System & Environmental, 8. Acoustic Treatment, 9. Cabling & Infrastructure, 10. Mounts & Racks, 11. Accessories & Services.
     *   Group all items correctly under their respective categories.
 
 **OUTPUT FORMAT:**
 Return ONLY a valid JSON array of objects with the following properties:
-- category: string (Must be one from Rule #5)
+- category: string (Must be one from Rule #8)
 - itemDescription: string
 - brand: string
 - model: string
@@ -89,6 +104,7 @@ Return ONLY a valid JSON array of objects with the following properties:
             config: {
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,
+                temperature: 0.2, // Lower temperature for more deterministic, rule-based output
             },
         });
 
@@ -103,10 +119,11 @@ Return ONLY a valid JSON array of objects with the following properties:
             "Audio - Microphones",
             "Audio - DSP & Amplification",
             "Audio - Speakers",
-            "Control System",
+            "Control System & Environmental",
+            "Acoustic Treatment",
             "Cabling & Infrastructure",
             "Mounts & Racks",
-            "Accessories",
+            "Accessories & Services",
         ];
 
         // Sort the BOQ according to the defined order
@@ -213,6 +230,7 @@ export const generateRoomVisualization = async (answers: Record<string, any>, bo
       
       ROOM DETAILS:
       - This is a ${answers.roomType || 'general use'} room.
+      - Seating Arrangement: ${answers.seatingArrangement || 'not specified'}.
       - General Description: ${roomDescription}.
       
       EQUIPMENT TO INCLUDE (seamlessly integrated into the design):
