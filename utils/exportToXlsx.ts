@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { ClientDetails, Room, BrandingSettings, Currency, CURRENCIES } from '../types';
+import { ClientDetails, Room, BrandingSettings, Currency, CURRENCIES, BoqItem } from '../types';
 import { companyTemplate } from '../data/scopeAndTermsData';
 import { getExchangeRates } from './currency';
 
@@ -30,7 +30,7 @@ export const exportToXlsx = async (
     };
 
     const sectionHeaderStyle = {
-        font: { bold: true, sz: 14 },
+        font: { bold: true, sz: 12, color: { rgb: "FF000000" } },
         fill: { fgColor: { rgb: "FFD9D9D9" } } // Light Grey
     };
     
@@ -179,53 +179,92 @@ export const exportToXlsx = async (
         if (room.boq) {
             const roomWs = XLSX.utils.aoa_to_sheet([]);
             let roomHeader: string[];
+            let colWidths: { wch: number }[];
 
             if (isINR) {
-                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', 'Unit Rate (INR)', 'Total (INR)', 'Margin (%)', 'Total after Margin (INR)', 'SGST 9% (INR)', 'CGST 9% (INR)', 'Total with Tax (INR)'];
+                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', 'Unit Rate (INR)', 'Total Amount (INR)', 'SGST 9% (INR)', 'CGST 9% (INR)', 'Final Amount (INR)'];
+                colWidths = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
             } else {
-                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', `Unit Rate (${currencyInfo.value})`, `Total (${currencyInfo.value})`, 'Margin (%)', `Total after Margin (${currencyInfo.value})`, `Tax (18%) (${currencyInfo.value})`, `Total with Tax (${currencyInfo.value})`];
+                roomHeader = ['Sr. No.', 'Description of Goods / Services', 'Specifications', 'Make', 'Qty.', `Unit Rate (${currencyInfo.value})`, `Total Amount (${currencyInfo.value})`, `Tax (18%) (${currencyInfo.value})`, `Final Amount (${currencyInfo.value})`];
+                colWidths = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
             }
 
             roomWs['!rows'] = [{ hpt: 25 }];
             roomHeader.forEach((val, i) => roomWs[XLSX.utils.encode_cell({c: i, r: 0})] = { v: val, s: headerStyle });
             
-            let roomSubTotal = 0, roomTotalAfterMargin = 0, roomSgstTotal = 0, roomCgstTotal = 0, roomTaxTotal = 0, roomGrandTotal = 0;
+            let roomSubTotal = 0, roomSgstTotal = 0, roomCgstTotal = 0, roomTaxTotal = 0, roomGrandTotal = 0;
+            let rowIndex = 1; // 0-indexed row number for worksheet, starting after the header row.
+            let itemSrNo = 1;
 
-            room.boq.forEach((item, index) => {
-                const unitPriceConverted = item.unitPrice * rate;
-                const totalPriceConverted = item.totalPrice * rate;
-                const currentItemMarginPercent = typeof item.margin === 'number' ? item.margin : margin;
-                const marginMultiplier = 1 + currentItemMarginPercent / 100;
-                const totalPriceWithMargin = totalPriceConverted * marginMultiplier;
-                
-                let rowData: any[];
+            const groupedBoq = room.boq.reduce((acc, item) => {
+                const category = item.category || 'Uncategorized';
+                if (!acc[category]) acc[category] = [];
+                acc[category].push(item);
+                return acc;
+            }, {} as Record<string, BoqItem[]>);
 
-                if (isINR) {
-                    const sgstAmount = totalPriceWithMargin * sgstRate;
-                    const cgstAmount = totalPriceWithMargin * cgstRate;
-                    const finalTotalPrice = totalPriceWithMargin + sgstAmount + cgstAmount;
-                    roomSgstTotal += sgstAmount;
-                    roomCgstTotal += cgstAmount;
-                     rowData = [ index + 1, item.itemDescription, item.model, item.brand, item.quantity, unitPriceConverted, totalPriceConverted, currentItemMarginPercent, totalPriceWithMargin, sgstAmount, cgstAmount, finalTotalPrice ];
-                } else {
-                    const taxAmount = totalPriceWithMargin * gstRate;
-                    const finalTotalPrice = totalPriceWithMargin + taxAmount;
-                    roomTaxTotal += taxAmount;
-                    rowData = [ index + 1, item.itemDescription, item.model, item.brand, item.quantity, unitPriceConverted, totalPriceConverted, currentItemMarginPercent, totalPriceWithMargin, taxAmount, finalTotalPrice ];
+            const categoryOrder = [
+                "Display", "Video Conferencing & Cameras", "Video Distribution & Switching",
+                "Audio - Microphones", "Audio - DSP & Amplification", "Audio - Speakers",
+                "Control System & Environmental", "Acoustic Treatment", "Cabling & Infrastructure",
+                "Mounts & Racks", "Accessories & Services"
+            ];
+
+            const orderedCategoriesInBoq = categoryOrder.filter(cat => groupedBoq[cat]);
+            Object.keys(groupedBoq).forEach(cat => {
+                if (!orderedCategoriesInBoq.includes(cat)) {
+                    orderedCategoriesInBoq.push(cat);
                 }
-
-                roomSubTotal += totalPriceConverted;
-                roomTotalAfterMargin += totalPriceWithMargin;
-                roomGrandTotal += rowData[rowData.length - 1]; // Total with tax is always the last item
-
-                XLSX.utils.sheet_add_aoa(roomWs, [rowData], { origin: `A${index + 2}` });
             });
+
+            for (const category of orderedCategoriesInBoq) {
+                const itemsInCategory = groupedBoq[category];
+                if (!itemsInCategory || itemsInCategory.length === 0) continue;
+
+                // Add category header row
+                roomWs["!merges"] = roomWs["!merges"] || [];
+                roomWs["!merges"].push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: roomHeader.length - 1 } });
+                XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(category, sectionHeaderStyle)]], { origin: `A${rowIndex + 2}` });
+                rowIndex++;
+
+                itemsInCategory.forEach(item => {
+                    const unitPriceConverted = item.unitPrice * rate;
+                    const currentItemMarginPercent = typeof item.margin === 'number' ? item.margin : margin;
+                    const marginMultiplier = 1 + currentItemMarginPercent / 100;
+
+                    const unitPriceWithMargin = unitPriceConverted * marginMultiplier;
+                    const totalPriceWithMargin = unitPriceWithMargin * item.quantity;
+                    
+                    let rowData: any[];
+
+                    if (isINR) {
+                        const sgstAmount = totalPriceWithMargin * sgstRate;
+                        const cgstAmount = totalPriceWithMargin * cgstRate;
+                        const finalTotalPrice = totalPriceWithMargin + sgstAmount + cgstAmount;
+                        roomSgstTotal += sgstAmount;
+                        roomCgstTotal += cgstAmount;
+                        rowData = [ itemSrNo, item.itemDescription, item.model, item.brand, item.quantity, unitPriceWithMargin, totalPriceWithMargin, sgstAmount, cgstAmount, finalTotalPrice ];
+                    } else {
+                        const taxAmount = totalPriceWithMargin * gstRate;
+                        const finalTotalPrice = totalPriceWithMargin + taxAmount;
+                        roomTaxTotal += taxAmount;
+                        rowData = [ itemSrNo, item.itemDescription, item.model, item.brand, item.quantity, unitPriceWithMargin, totalPriceWithMargin, taxAmount, finalTotalPrice ];
+                    }
+
+                    roomSubTotal += totalPriceWithMargin;
+                    roomGrandTotal += rowData[rowData.length - 1];
+
+                    XLSX.utils.sheet_add_aoa(roomWs, [rowData.map((val, i) => createStyledCell(val, {}, i > 3 ? 'n' : 's'))], { origin: `A${rowIndex + 2}` });
+                    itemSrNo++;
+                    rowIndex++;
+                });
+            }
             
-            const totalRowStart = room.boq.length + 3;
-            const totalsOriginCol = isINR ? 'K' : 'J';
+            rowIndex++; // Spacer row
+            const totalRowStart = rowIndex + 1;
+            const totalsOriginCol = String.fromCharCode(65 + roomHeader.length - 2);
             let totalRows: [string, number][] = [
                 ['Subtotal:', roomSubTotal],
-                ['Total after Margin:', roomTotalAfterMargin],
             ];
 
             if (isINR) {
@@ -239,12 +278,7 @@ export const exportToXlsx = async (
                 XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(data[0], totalStyle), createStyledCell(data[1], totalStyle, 'n')]], { origin: `${totalsOriginCol}${totalRowStart + i}`});
             });
 
-            if (isINR) {
-                roomWs['!cols'] = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
-            } else {
-                 roomWs['!cols'] = [ { wch: 8 }, { wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 20 }];
-            }
-            
+            roomWs['!cols'] = colWidths;
             XLSX.utils.book_append_sheet(wb, roomWs, getUniqueSheetName(room.name));
         }
     }
