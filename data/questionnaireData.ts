@@ -2,7 +2,25 @@ import type { QuestionnaireSection } from '../types';
 
 export const questionnaire: QuestionnaireSection[] = [
   {
-    title: '1. Room Fundamentals',
+    title: '1. Scope Definition',
+    questions: [
+      {
+        id: 'requiredSystems',
+        text: 'Which systems are required for this room? (Uncheck to exclude from BOQ)',
+        type: 'multiple-choice',
+        options: [
+          { label: 'Display System', value: 'display' },
+          { label: 'Video Conferencing System', value: 'video_conferencing' },
+          { label: 'Audio System', value: 'audio' },
+          { label: 'Connectivity & Control System', value: 'connectivity_control' },
+          { label: 'Infrastructure (Racks, Mounts, Power, Network)', value: 'infrastructure' },
+          { label: 'Acoustic Treatment', value: 'acoustics' },
+        ],
+      },
+    ],
+  },
+  {
+    title: '2. Room Fundamentals',
     questions: [
       {
         id: 'roomType',
@@ -56,7 +74,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '2. Display & Playback Systems',
+    title: '3. Display & Playback Systems',
     questions: [
       {
         id: 'mainDisplayTechnology',
@@ -157,7 +175,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '3. Video Conferencing',
+    title: '4. Video Conferencing',
     questions: [
       {
         id: 'conferencing',
@@ -221,7 +239,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '4. Audio System',
+    title: '5. Audio System',
     questions: [
       {
         id: 'microphoneType',
@@ -303,7 +321,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '5. Connectivity & Control',
+    title: '6. Connectivity & Control',
     questions: [
       {
         id: 'connectivity',
@@ -401,7 +419,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '6. Infrastructure (Racks, Mounts, Power, Network)',
+    title: '7. Infrastructure (Racks, Mounts, Power, Network)',
     questions: [
         {
             id: 'wallConstruction',
@@ -525,7 +543,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ]
   },
   {
-    title: '7. Room Acoustics',
+    title: '8. Room Acoustics',
     questions: [
        {
         id: 'acousticNeeds',
@@ -562,7 +580,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '8. Lighting & Environment Control',
+    title: '9. Lighting & Environment Control',
     questions: [
         {
           id: 'lightingControl',
@@ -599,7 +617,7 @@ export const questionnaire: QuestionnaireSection[] = [
     ],
   },
   {
-    title: '9. Additional Features & Services',
+    title: '10. Additional Features & Services',
     questions: [
         {
           id: 'roomScheduling',

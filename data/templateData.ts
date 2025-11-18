@@ -10,6 +10,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Single 55"-65" Display'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'huddle',
       roomLength: 10,
       roomWidth: 8,
@@ -73,6 +74,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Dual 75"-86" Displays'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'conference',
       roomLength: 20,
       roomWidth: 15,
@@ -136,6 +138,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Direct View LED or 98"+ Display'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'boardroom',
       roomLength: 30,
       roomWidth: 20,
@@ -200,6 +203,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Interactive Display'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'classroom',
       roomLength: 25,
       roomWidth: 20,
@@ -264,6 +268,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Projector per Division'
     },
     answers: {
+        requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
         roomType: 'divisible_room',
         roomLength: 40,
         roomWidth: 25,
@@ -327,6 +332,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Large Venue Projector'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'auditorium',
       roomLength: 80,
       roomWidth: 60,
@@ -391,6 +397,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Multiple LFDs / Projectors'
     },
     answers: {
+        requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
         roomType: 'cafeteria',
         roomLength: 60,
         roomWidth: 50,
@@ -453,6 +460,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Video Wall'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'town_hall',
       roomLength: 50,
       roomWidth: 40,
@@ -518,6 +526,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Video Wall / Interactive'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'experience_center',
       roomLength: 40,
       roomWidth: 30,
@@ -583,6 +592,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Large Multi-Screen Video Wall'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'noc',
       roomLength: 50,
       roomWidth: 35,
@@ -648,6 +658,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Single 65"-75" Display'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'executive_office',
       roomLength: 15,
       roomWidth: 12,
@@ -712,6 +723,7 @@ export const roomTemplates: RoomTemplate[] = [
         display: 'Commercial Signage Display'
     },
     answers: {
+      requiredSystems: ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'],
       roomType: 'lobby',
       roomLength: 30,
       roomWidth: 25,

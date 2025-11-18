@@ -133,10 +133,20 @@ const App: React.FC = () => {
 
   const handleAddRoom = (templateAnswers: Record<string, any> = {}, templateName?: string) => {
     const newRoomId = Math.random().toString(36).substring(2, 9);
+    const finalAnswers = { ...templateAnswers };
+
+    // If it's a blank room (no template), set default required systems
+    if (Object.keys(templateAnswers).length === 0) {
+      finalAnswers.requiredSystems = [
+        'display', 'video_conferencing', 'audio', 
+        'connectivity_control', 'infrastructure', 'acoustics'
+      ];
+    }
+
     const newRoom: Room = {
       id: newRoomId,
       name: templateName ? templateName : `Room ${rooms.length + 1}`,
-      answers: templateAnswers,
+      answers: finalAnswers,
       boq: null,
       isLoading: false,
       error: null,
@@ -239,7 +249,7 @@ const App: React.FC = () => {
       if (!requirements) {
         throw new Error("Please fill out the questionnaire before generating.");
       }
-      const newBoq = await generateBoq(requirements);
+      const newBoq = await generateBoq(activeRoom.answers);
       
       setRooms(prevRooms => prevRooms.map(r => r.id === activeRoomId ? { ...r, boq: newBoq, isLoading: false } : r));
 

@@ -193,7 +193,7 @@ export const exportToXlsx = async (
             roomHeader.forEach((val, i) => roomWs[XLSX.utils.encode_cell({c: i, r: 0})] = { v: val, s: headerStyle });
             
             let roomSubTotal = 0, roomSgstTotal = 0, roomCgstTotal = 0, roomTaxTotal = 0, roomGrandTotal = 0;
-            let rowIndex = 1; // 0-indexed row number for worksheet, starting after the header row.
+            let rowIndex = 1; // Tracks the current 0-indexed row in the worksheet, starting after the header (row 0).
             let itemSrNo = 1;
 
             const groupedBoq = room.boq.reduce((acc, item) => {
@@ -224,7 +224,7 @@ export const exportToXlsx = async (
                 // Add category header row
                 roomWs["!merges"] = roomWs["!merges"] || [];
                 roomWs["!merges"].push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: roomHeader.length - 1 } });
-                XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(category, sectionHeaderStyle)]], { origin: `A${rowIndex + 2}` });
+                XLSX.utils.sheet_add_aoa(roomWs, [[createStyledCell(category, sectionHeaderStyle)]], { origin: `A${rowIndex + 1}` });
                 rowIndex++;
 
                 itemsInCategory.forEach(item => {
@@ -254,7 +254,7 @@ export const exportToXlsx = async (
                     roomSubTotal += totalPriceWithMargin;
                     roomGrandTotal += rowData[rowData.length - 1];
 
-                    XLSX.utils.sheet_add_aoa(roomWs, [rowData.map((val, i) => createStyledCell(val, {}, i > 3 ? 'n' : 's'))], { origin: `A${rowIndex + 2}` });
+                    XLSX.utils.sheet_add_aoa(roomWs, [rowData.map((val, i) => createStyledCell(val, {}, i > 3 ? 'n' : 's'))], { origin: `A${rowIndex + 1}` });
                     itemSrNo++;
                     rowIndex++;
                 });

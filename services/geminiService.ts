@@ -10,68 +10,98 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 /**
  * Generates a Bill of Quantities (BOQ) based on user requirements.
  */
-export const generateBoq = async (requirements: string): Promise<Boq> => {
+export const generateBoq = async (answers: Record<string, any>): Promise<Boq> => {
     const model = 'gemini-2.5-pro';
+
+    const requiredSystems = answers.requiredSystems || ['display', 'video_conferencing', 'audio', 'connectivity_control', 'infrastructure', 'acoustics'];
+    
+    const categoryMap: Record<string, string[]> = {
+        display: ["Display"],
+        video_conferencing: ["Video Conferencing & Cameras"],
+        audio: ["Audio - Microphones", "Audio - DSP & Amplification", "Audio - Speakers"],
+        connectivity_control: ["Video Distribution & Switching", "Control System & Environmental"],
+        infrastructure: ["Cabling & Infrastructure", "Mounts & Racks"],
+        acoustics: ["Acoustic Treatment"],
+    };
+
+    const allowedCategories = requiredSystems.flatMap((system: string) => categoryMap[system] || []);
+    allowedCategories.push("Accessories & Services"); // Always include this category
+
+    const requirements = Object.entries(answers)
+      .map(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0) {
+          return `${key}: ${value.join(', ')}`;
+        }
+        if (value) {
+            return `${key}: ${value}`;
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .join('; ');
+
     const prompt = `You are a world-class, senior AV Systems Designer. Your task is to create a 100% technically flawless, logical, and production-ready Bill of Quantities (BOQ) based on the client's detailed requirements from a comprehensive questionnaire. You must adhere strictly to all AVIXA standards and all rules below.
 
 **Client Requirements (from questionnaire):** "${requirements}"
 
 **MANDATORY DESIGN RULES:**
 
+0.  **SCOPE DEFINITION (CRITICAL):** The client has specified which systems are required via the 'requiredSystems' answer. You MUST ONLY include items from the following categories: ${allowedCategories.join(', ')}. Do not generate any items for categories that are not on this allowed list. This is the most important rule; ignoring it will result in a failed design.
+
 1.  **Core Design Principles:**
-    *   **Production-Ready:** Every item must be essential. The final BOQ must represent a complete, installable system with no missing parts.
+    *   **Production-Ready:** Every item must be essential. The final BOQ must represent a complete, installable system with no missing parts *for the requested scope*.
     *   **Logical Cohesion:** The system must be designed as a single, unified ecosystem. Core components for control, audio DSP, and video distribution must be from the same brand family (e.g., Crestron control with Crestron switching; Q-SYS DSP with Q-SYS cameras). Do not mix competing core ecosystems. This is a critical failure condition.
     *   **No Redundancy:** Avoid duplicative functionality. If a Yealink VC kit includes wireless presentation, DO NOT add a separate Barco ClickShare.
     *   **Current Products:** Specify only current-generation, commercially available products. Do not use end-of-life, outdated, or consumer-grade models. All displays MUST be professional/commercial grade.
 
 2.  **Sizing & Coverage (AVIXA Standards):**
-    *   **Display Sizing (AVIXA 4:6:8 Rule):** Calculate the minimum required display height based on the room length. Assume the furthest viewer is at the back of the room. For Boardrooms, NOCs, or Experience Centers, use "Critical Viewing" (furthest viewer <= 4x image height). For all other rooms, use "Detailed Viewing" (furthest viewer <= 6x image height). Select a standard commercial display size (e.g., 55", 65", 75", 86", 98") that meets or exceeds this calculated height.
-    *   **Display Brightness (AVIXA ISCR):** Consider \`naturalLightLevel\`. If 'high', you MUST specify high-brightness displays (min 700 nits) or a high-lumen projector with an Ambient Light Rejecting (ALR) screen.
-    *   **Audio Coverage:** Ensure even sound pressure level (SPL) and high speech intelligibility across the entire seating area. For rooms longer than 15 feet or with more than 8 people, you MUST specify a sufficient number of ceiling speakers.
-    *   **Microphone Coverage:** Ensure complete audio capture for all participants. For any room with a capacity over 6, ceiling or tabletop microphones are mandatory.
-    *   **Camera Field of View (FOV):** The selected camera(s) MUST capture all participants based on the seating arrangement and room dimensions.
+    *   **Display Sizing (AVIXA 4:6:8 Rule):** If displays are in scope, calculate the minimum required display height based on the room length. Assume the furthest viewer is at the back of the room. For Boardrooms, NOCs, or Experience Centers, use "Critical Viewing" (furthest viewer <= 4x image height). For all other rooms, use "Detailed Viewing" (furthest viewer <= 6x image height). Select a standard commercial display size (e.g., 55", 65", 75", 86", 98") that meets or exceeds this calculated height.
+    *   **Display Brightness (AVIXA ISCR):** If displays are in scope, consider \`naturalLightLevel\`. If 'high', you MUST specify high-brightness displays (min 700 nits) or a high-lumen projector with an Ambient Light Rejecting (ALR) screen.
+    *   **Audio Coverage:** If audio is in scope, ensure even sound pressure level (SPL) and high speech intelligibility across the entire seating area. For rooms longer than 15 feet or with more than 8 people, you MUST specify a sufficient number of ceiling speakers.
+    *   **Microphone Coverage:** If audio is in scope, ensure complete audio capture for all participants. For any room with a capacity over 6, ceiling or tabletop microphones are mandatory.
+    *   **Camera Field of View (FOV):** If video conferencing is in scope, the selected camera(s) MUST capture all participants based on the seating arrangement and room dimensions.
 
 3.  **Advanced Display & Audio Logic:**
-    *   **Display Types:** A \`video_wall\` or \`direct_view_led\` requires a dedicated video processor/controller. Use \`videoWallConfig\` to determine the number of displays. \`secondaryDisplays\` (e.g., 'Confidence Monitors') require their own screens and dedicated video outputs from the switching system.
-    *   **Audio Types:** For \`bgmPaSystem\` ('bgm_only', 'pa_only', or 'both'), you MUST include a 70V/100V multi-zone amplifier and 70V speakers, separate from conferencing audio. If \`audioZoningRequired\` is 'yes', specify a DSP and/or amplifier with multiple output zones. If \`microphoneType\` includes \`throwable_mic\`, add a 'Catchbox'.
+    *   **Display Types:** If displays are in scope, a \`video_wall\` or \`direct_view_led\` requires a dedicated video processor/controller. Use \`videoWallConfig\` to determine the number of displays. \`secondaryDisplays\` (e.g., 'Confidence Monitors') require their own screens and dedicated video outputs from the switching system.
+    *   **Audio Types:** If audio is in scope, for \`bgmPaSystem\` ('bgm_only', 'pa_only', or 'both'), you MUST include a 70V/100V multi-zone amplifier and 70V speakers, separate from conferencing audio. If \`audioZoningRequired\` is 'yes', specify a DSP and/or amplifier with multiple output zones. If \`microphoneType\` includes \`throwable_mic\`, add a 'Catchbox'.
 
 4.  **Acoustics, Lighting & Environmental Control (CRITICAL):**
-    *   **Acoustics:** If \`acousticNeeds\` is 'poor', or if there are significant \`primaryNoiseSources\`, you MUST include line items for the specific treatments selected in \`acousticTreatmentType\` (e.g., 'Acoustic Wall Panels', 'Ceiling Baffles'). These items belong in the 'Acoustic Treatment' category.
-    *   **Lighting Control:** If \`lightingControl\` is 'dimming' or 'full_integration', you MUST include a compatible lighting control system (e.g., Lutron, Crestron) and the correct type of dimmers/interfaces based on \`existingLightingFixtures\` (e.g., phase-adaptive dimmers for LEDs).
-    *   **Shade Control:** If \`shadeControl\` is 'yes', you MUST include motorized shades, a power supply, and a control interface (e.g., Somfy) compatible with the main control system.
+    *   **Acoustics:** If acoustics are in scope, and if \`acousticNeeds\` is 'poor', or if there are significant \`primaryNoiseSources\`, you MUST include line items for the specific treatments selected in \`acousticTreatmentType\` (e.g., 'Acoustic Wall Panels', 'Ceiling Baffles'). These items belong in the 'Acoustic Treatment' category.
+    *   **Lighting Control:** If control systems are in scope, and if \`lightingControl\` is 'dimming' or 'full_integration', you MUST include a compatible lighting control system (e.g., Lutron, Crestron) and the correct type of dimmers/interfaces based on \`existingLightingFixtures\` (e.g., phase-adaptive dimmers for LEDs).
+    *   **Shade Control:** If control systems are in scope, and if \`shadeControl\` is 'yes', you MUST include motorized shades, a power supply, and a control interface (e.g., Somfy) compatible with the main control system.
 
 5.  **Divisible Room & Control Logic:**
-    *   **Divisible Rooms:** If \`roomType\` is \`divisible_room\`, the entire design MUST support this. This requires a scalable matrix switcher, a DSP with sufficient I/O and AEC for all combinations, and a control system with logic for combined/separate modes.
-    *   **Control Systems:** \`controlSystem\` is multi-select. Include hardware for ALL selected options. If \`bms_integration\` is chosen, the control processor MUST have a BACnet/IP gateway.
+    *   **Divisible Rooms:** If \`roomType\` is \`divisible_room\` and all relevant systems are in scope, the entire design MUST support this. This requires a scalable matrix switcher, a DSP with sufficient I/O and AEC for all combinations, and a control system with logic for combined/separate modes.
+    *   **Control Systems:** If control systems are in scope, \`controlSystem\` is multi-select. Include hardware for ALL selected options. If \`bms_integration\` is chosen, the control processor MUST have a BACnet/IP gateway.
 
 6.  **Infrastructure & Connectivity Logic (CRITICAL):**
-    *   **Connection Points:** You MUST specify the correct physical hardware (e.g., a specific Crestron FT2-700 for 'tabletop_box', a brand-name floor box for 'floor_box'). Distribute the ports from \`requiredWiredInputs\` logically across the selected \`connectivityPoints\`.
-    *   **Connectivity Hardware:** Include all necessary transmitters, receivers (HDBaseT or AV-over-IP), and cabling for EACH connection point to integrate it back to the main system rack.
+    *   **Connection Points:** If connectivity is in scope, you MUST specify the correct physical hardware (e.g., a specific Crestron FT2-700 for 'tabletop_box', a brand-name floor box for 'floor_box'). Distribute the ports from \`requiredWiredInputs\` logically across the selected \`connectivityPoints\`.
+    *   **Connectivity Hardware:** If connectivity is in scope, include all necessary transmitters, receivers (HDBaseT or AV-over-IP), and cabling for EACH connection point to integrate it back to the main system rack.
     *   **Power & Network:**
-        *   If \`powerInfrastructure\` is 'extend_power', include power extension cables and/or floor-rated cable concealers.
-        *   If \`upsRequirement\` is not 'none', you MUST include a rack-mountable UPS with an appropriate VA rating for the specified load ('ups_for_rack' or 'ups_for_rack_and_displays').
-        *   If \`networkInfrastructure\` is 'coordinate', add a note in the description for the main AV network switch: "Requires coordination with IT for network drop activation/installation".
-    *   **Intercom:** If \`intercomSystemRequired\` is 'yes', add a complete production intercom system (e.g., Clear-Com, RTS) including a base station, beltpacks, and headsets.
+        *   If infrastructure is in scope, and if \`powerInfrastructure\` is 'extend_power', include power extension cables and/or floor-rated cable concealers.
+        *   If infrastructure is in scope, and if \`upsRequirement\` is not 'none', you MUST include a rack-mountable UPS with an appropriate VA rating for the specified load ('ups_for_rack' or 'ups_for_rack_and_displays').
+        *   If infrastructure is in scope, and if \`networkInfrastructure\` is 'coordinate', add a note in the description for the main AV network switch: "Requires coordination with IT for network drop activation/installation".
+    *   **Intercom:** If \`intercomSystemRequired\` is 'yes' and audio is in scope, add a complete production intercom system (e.g., Clear-Com, RTS) including a base station, beltpacks, and headsets.
 
 7.  **Completeness & Ancillaries:**
-    *   You MUST include every necessary accessory for a complete installation.
-    *   A specific, named, managed network switch for ANY system using AV-over-IP.
-    *   The correct mount for every device, respecting \`wallConstruction\` and \`ceilingConstruction\`.
+    *   You MUST include every necessary accessory for a complete installation *within the defined scope*.
+    *   If connectivity is in scope, a specific, named, managed network switch for ANY system using AV-over-IP.
+    *   If infrastructure is in scope, the correct mount for every device, respecting \`wallConstruction\` and \`ceilingConstruction\`.
         *   If \`ceilingConstruction\` is 'acoustic_drop_tile', ceiling speakers and mics MUST have tile bridges.
         *   If 'glass' wall, specify specialized glass mounts or floor stands.
         *   If 'open_exposed' ceiling, specify pendant mounts or beam clamps.
-    *   A rack-mount power distribution unit (PDU) and blank panels for any equipment rack.
-    *   All required cables, connectors, and wall plates.
+    *   If infrastructure is in scope, a rack-mount power distribution unit (PDU) and blank panels for any equipment rack.
+    *   If infrastructure is in scope, all required cables, connectors, and wall plates.
     *   If the \`rackLocation\` is in an 'av_closet', calculate cable lengths and add extenders if necessary.
     *   If \`userTrainingRequired\` is not 'no', you MUST add a line item for the specified training (e.g., 'On-site User Training Session') in the 'Accessories & Services' category.
 
 8.  **BOQ Structure & Formatting:**
     *   You MUST use and order these categories exactly: 1. Display, 2. Video Conferencing & Cameras, 3. Video Distribution & Switching, 4. Audio - Microphones, 5. Audio - DSP & Amplification, 6. Audio - Speakers, 7. Control System & Environmental, 8. Acoustic Treatment, 9. Cabling & Infrastructure, 10. Mounts & Racks, 11. Accessories & Services.
-    *   Group all items correctly under their respective categories.
+    *   Group all items correctly under their respective categories. Only use categories from the allowed list in Rule #0.
 
 **OUTPUT FORMAT:**
 Return ONLY a valid JSON array of objects with the following properties:
-- category: string (Must be one from Rule #8)
+- category: string (Must be one from the allowed list in Rule #0)
 - itemDescription: string
 - brand: string
 - model: string
